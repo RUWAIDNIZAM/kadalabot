@@ -1,6 +1,17 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
+const express = require('express');
 
+// 🌐 KEEP-ALIVE SERVER (for Railway)
+const app = express();
+app.get("/", (req, res) => {
+  res.send("Verkadala bot is alive 🌰");
+});
+app.listen(3000, () => {
+  console.log("Web server running...");
+});
+
+// 🤖 DISCORD BOT SETUP
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -33,12 +44,12 @@ function formatTime(ms) {
   return `${sec}s`;
 }
 
-// ✅ UPDATED READY EVENT
+// ✅ READY EVENT
 client.on('clientReady', () => {
   console.log("🌰 Verkadala is watching kadala...");
 });
 
-// MAIN LOGIC
+// 💬 MAIN LOGIC
 client.on('messageCreate', message => {
   if (message.author.bot) return;
 
@@ -88,9 +99,9 @@ client.on('messageCreate', message => {
   });
 });
 
-// ✅ CRASH PROTECTION
+// 🛡️ CRASH PROTECTION
 process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
 
-// LOGIN
+// 🔐 LOGIN
 client.login(process.env.TOKEN);
