@@ -17,12 +17,12 @@ if (fs.existsSync(FILE)) {
   afkUsers = JSON.parse(fs.readFileSync(FILE));
 }
 
-// Save data
+// Save AFK data
 function saveData() {
   fs.writeFileSync(FILE, JSON.stringify(afkUsers, null, 2));
 }
 
-// Time formatter
+// Time format
 function formatTime(ms) {
   const sec = Math.floor(ms / 1000);
   const min = Math.floor(sec / 60);
@@ -33,10 +33,12 @@ function formatTime(ms) {
   return `${sec}s`;
 }
 
-client.on('ready', () => {
+// ✅ UPDATED READY EVENT
+client.on('clientReady', () => {
   console.log("🌰 Verkadala is watching kadala...");
 });
 
+// MAIN LOGIC
 client.on('messageCreate', message => {
   if (message.author.bot) return;
 
@@ -86,8 +88,9 @@ client.on('messageCreate', message => {
   });
 });
 
-// Error safety
+// ✅ CRASH PROTECTION
+process.on("uncaughtException", console.error);
 process.on("unhandledRejection", console.error);
 
-// Login
+// LOGIN
 client.login(process.env.TOKEN);
