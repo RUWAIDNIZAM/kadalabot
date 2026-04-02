@@ -3,7 +3,7 @@ const fs = require('fs');
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// INIT GEMINI
+// INIT GEMINI (AI STUDIO KEY REQUIRED)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // KEEP ALIVE (Render)
@@ -108,7 +108,7 @@ client.on('messageCreate', async (message) => {
 
     try {
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash"
+        model: "gemini-1.5-flash-latest"
       });
 
       const result = await model.generateContent(
