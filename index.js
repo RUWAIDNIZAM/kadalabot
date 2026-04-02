@@ -21,16 +21,14 @@ const cooldown = new Map();
 // 🔥 MODELS (auto fallback)
 const MODELS = [
   "meta-llama/llama-3-8b-instruct",
-  "meta-llama/llama-3-70b-instruct",
-  "mistralai/mistral-7b-instruct",
-  "google/gemma-7b-it"
+  "google/gemma-7b-it",
+  "mistralai/mistral-7b-instruct"
 ];
 
 client.once('clientReady', () => {
   console.log("Verkadala is running");
 });
 
-// MAIN
 client.on('messageCreate', async (message) => {
   try {
     if (message.author.bot) return;
@@ -39,72 +37,94 @@ client.on('messageCreate', async (message) => {
     const content = message.content.toLowerCase();
     const userId = message.author.id;
 
-    if (content.startsWith("kadala ai")) {
+    if (!content.startsWith("kadala ai")) return;
 
-      const now = Date.now();
-      const last = cooldown.get(userId) || 0;
+    // cooldown
+    const now = Date.now();
+    const last = cooldown.get(userId) || 0;
 
-      if (now - last < 3000) {
-        return message.reply("dei dei slow down da");
-      }
+    if (now - last < 3000) {
+      return message.reply("dei dei slow down da");
+    }
 
-      cooldown.set(userId, now);
+    cooldown.set(userId, now);
 
-      const prompt = message.content.slice(10).trim();
-      if (!prompt) return message.reply("enna kekka pora sollu");
+    const prompt = message.content.slice(10).trim();
+    if (!prompt) return message.reply("enna kekka pora sollu");
 
-      // wait message
-      const tempMsg = await message.reply("oru nimisham...");
+    const tempMsg = await message.reply("oru nimisham...");
 
-      let finalReply = null;
+    let finalReply = null;
 
-      // 🔥 TRY ALL MODELS
-      for (let i = 0; i < MODELS.length; i++) {
-        const modelName = MODELS[i];
+    for (const model of MODELS) {
+      try {
+        console.log("Trying:", model);
 
-        try {
-          console.log("Trying:", modelName);
+        const res = await axios.post(
+          "https://openrouter.ai/api/v1/chat/completions",
+          {
+            model,
+            messages: [
+              {
+                role: "user",
+                content: `
+You are Verkadala, a funny Tamil Discord bot.
 
-          const res = await axios.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            {
-              model: modelName,
-              messages: [
-                {
-                  role: "user",
-                  content: `Reply in Tamil slang (Tanglish), short and natural.\nUser: ${prompt}`
-                }
-              ]
-            },
-            {
-              headers: {
-                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://kadalabot.onrender.com",
-                "X-Title": "Verkadala Bot"
+Rules:
+- Reply ONLY in casual Tamil slang (Tanglish)
+- Be funny, slightly savage, but friendly
+- Do NOT be too short
+- Do NOT give boring replies
+- Add attitude and personality
+- Make replies feel human, not robotic
+
+Examples:
+User: hi
+Reply: dei enna da ippo dhaan online ah?
+
+User: what doing
+Reply: inga waste ah iruken da, nee enna panra?
+
+User: dei
+Reply: dei nu koopdura alavukku close ah? 😏
+
+Now reply properly.
+
+User: ${prompt}
+`
               }
-            }
-          );
-
-          const reply = res.data.choices?.[0]?.message?.content;
-
-          if (reply) {
-            finalReply = reply;
-            console.log("SUCCESS:", modelName);
-            break;
+            ],
+            max_tokens: 200,
+            temperature: 0.9
+          },
+          {
+            headers: {
+              "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://kadalabot.onrender.com",
+              "X-Title": "Verkadala Bot"
+            },
+            timeout: 10000
           }
+        );
 
-        } catch (err) {
-          console.log("FAILED:", modelName);
+        const reply = res.data?.choices?.[0]?.message?.content;
+
+        if (reply) {
+          finalReply = reply;
+          console.log("SUCCESS:", model);
+          break;
         }
-      }
 
-      // RESULT
-      if (!finalReply) {
-        await tempMsg.edit("edho problem iruku, apram try pannu");
-      } else {
-        await tempMsg.edit(finalReply);
+      } catch (err) {
+        console.log("FAILED:", model);
       }
+    }
+
+    if (!finalReply) {
+      await tempMsg.edit("edho problem iruku, apram try pannu");
+    } else {
+      await tempMsg.edit(finalReply);
     }
 
   } catch (err) {
