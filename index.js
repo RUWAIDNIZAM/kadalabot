@@ -1,18 +1,16 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const express = require('express');
-const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// INIT GEMINI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // KEEP ALIVE (Render)
 const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Verkadala bot is alive");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Web server running on port ${PORT}...`);
+app.get("/", (req, res) => res.send("Verkadala bot is alive"));
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Web server running...");
 });
 
 // DISCORD BOT
@@ -55,7 +53,7 @@ client.on('clientReady', () => {
   console.log("Verkadala is running");
 });
 
-// MAIN (ASYNC FIXED HERE)
+// MAIN
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
@@ -109,24 +107,15 @@ client.on('messageCreate', async (message) => {
     }
 
     try {
-      const res = await axios.post(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `You are Verkadala, a Tamil Discord bot. Reply in casual Tamil slang (Tanglish), short and natural.\nUser: ${prompt}`
-                }
-              ]
-            }
-          ]
-        }
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash"
+      });
+
+      const result = await model.generateContent(
+        `You are Verkadala, a Tamil Discord bot. Reply in casual Tamil slang (Tanglish), short and natural.\nUser: ${prompt}`
       );
 
-      const reply =
-        res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const reply = result.response.text();
 
       if (!reply) {
         return message.reply("response illa");
@@ -135,7 +124,7 @@ client.on('messageCreate', async (message) => {
       message.reply(reply);
 
     } catch (err) {
-      console.error("AI ERROR:", JSON.stringify(err.response?.data, null, 2));
+      console.error("AI ERROR:", err);
       message.reply("edho problem iruku, apram try pannu");
     }
   }
