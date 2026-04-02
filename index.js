@@ -1,92 +1,56 @@
-const { Client, GatewayIntentBits } = require('discord.js');
-const express = require('express');
-const axios = require('axios');
+// 🤖 AI COMMAND
+if (content.startsWith("kadala ai")) {
 
-// KEEP ALIVE
-const app = express();
-app.get("/", (req, res) => res.send("Bot alive"));
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Web server running...");
-});
+  const now = Date.now();
+  const last = cooldown.get(userId) || 0;
 
-// DISCORD BOT
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
+  if (now - last < 3000) {
+    return message.reply("dei dei slow down da");
+  }
 
-const cooldown = new Map();
+  cooldown.set(userId, now);
 
-client.on('clientReady', () => {
-  console.log("Verkadala is running");
-});
+  const prompt = message.content.slice(10).trim();
 
-// ✅ ASYNC FIX HERE
-client.on('messageCreate', async (message) => {
+  if (!prompt) {
+    return message.reply("enna kekka pora sollu");
+  }
+
+  // ⏳ temp message
+  const tempMsg = await message.reply("oru nimisham...");
+
   try {
-    if (message.author.bot) return;
-    if (!message.content) return;
-
-    const content = message.content.toLowerCase();
-    const userId = message.author.id;
-
-    // 🤖 AI COMMAND
-    if (content.startsWith("kadala ai")) {
-
-      const now = Date.now();
-      const last = cooldown.get(userId) || 0;
-
-      if (now - last < 3000) {
-        return message.reply("dei dei slow down da");
-      }
-
-      cooldown.set(userId, now);
-
-      const prompt = message.content.slice(10).trim();
-
-      if (!prompt) {
-        return message.reply("enna kekka pora sollu");
-      }
-
-      // 👇 wait message
-      const tempMsg = await message.reply("oru nimisham...");
-
-      try {
-        const res = await axios.post(
-          "https://openrouter.ai/api/v1/chat/completions",
+    const res = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "openchat/openchat-3.5", // ✅ WORKING MODEL
+        messages: [
           {
-            model: "mistralai/mistral-7b-instruct",
-            messages: [
-              {
-                role: "user",
-                content: `Reply in Tamil slang.\nUser: ${prompt}`
-              }
-            ]
-          },
-          {
-            headers: {
-              "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-              "Content-Type": "application/json"
-            }
+            role: "user",
+            content: `Reply in Tamil slang (Tanglish), short and natural.\nUser: ${prompt}`
           }
-        );
-
-        const reply = res.data.choices[0].message.content;
-
-        await tempMsg.edit(reply);
-
-      } catch (err) {
-        console.error("AI ERROR:", err.response?.data || err.message);
-        await tempMsg.edit("edho problem iruku, apram try pannu");
+        ]
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://kadalabot.onrender.com",
+          "X-Title": "Verkadala Bot"
+        }
       }
+    );
+
+    const reply = res.data.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      return tempMsg.edit("response illa");
     }
 
-  } catch (err) {
-    console.error("GLOBAL ERROR:", err);
-  }
-});
+    await tempMsg.edit(reply);
 
-client.login(process.env.TOKEN);
+  } catch (err) {
+    console.error("FULL ERROR:", err.response?.data || err.message);
+    await tempMsg.edit("edho problem iruku, apram try pannu");
+  }
+}
