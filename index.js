@@ -1,7 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
 const axios = require('axios');
-const fs = require('fs');
 
 // KEEP ALIVE
 const app = express();
@@ -19,27 +18,7 @@ const client = new Client({
 
 const cooldown = new Map();
 
-// AFK STORAGE
-const FILE = './afk.json';
-let afkUsers = {};
-if (fs.existsSync(FILE)) {
-  afkUsers = JSON.parse(fs.readFileSync(FILE));
-}
-
-function saveAFK() {
-  fs.writeFileSync(FILE, JSON.stringify(afkUsers, null, 2));
-}
-
-function formatTime(ms) {
-  const sec = Math.floor(ms / 1000);
-  const min = Math.floor(sec / 60);
-  const hr = Math.floor(min / 60);
-  if (hr > 0) return `${hr}h ${min % 60}m`;
-  if (min > 0) return `${min}m`;
-  return `${sec}s`;
-}
-
-// MODELS
+// 🔥 MODELS (fallback)
 const MODELS = [
   "meta-llama/llama-3-8b-instruct",
   "google/gemma-7b-it"
@@ -57,36 +36,20 @@ client.on('messageCreate', async (message) => {
     const content = message.content.toLowerCase();
     const userId = message.author.id;
 
-    // ================= AFK REMOVE =================
-    if (afkUsers[userId]) {
-      const time = Date.now() - afkUsers[userId].time;
-      const duration = formatTime(time);
+    // ================= DETECT REPLY TO BOT =================
+    let isReplyToBot = false;
 
-      delete afkUsers[userId];
-      saveAFK();
-
-      await message.reply(
-        `${message.author.username} ${duration} neram AFK la irundhaan, welcome back`
-      );
+    if (message.reference) {
+      const replied = await message.channel.messages.fetch(message.reference.messageId);
+      if (replied.author.id === client.user.id) {
+        isReplyToBot = true;
+      }
     }
 
-    // ================= AFK SET =================
-    if (content.startsWith("kadala afk")) {
-      const reason = message.content.slice(11).trim() || "reason illa";
+    // ================= TRIGGER =================
+    if (!content.startsWith("kadala ai") && !isReplyToBot) return;
 
-      afkUsers[userId] = {
-        reason,
-        time: Date.now()
-      };
-
-      saveAFK();
-
-      return message.reply(`seri, ippo AFK la iruken\nReason: ${reason}`);
-    }
-
-    // ================= AI =================
-    if (!content.startsWith("kadala ai")) return;
-
+    // ================= COOLDOWN =================
     const now = Date.now();
     const last = cooldown.get(userId) || 0;
 
@@ -96,9 +59,14 @@ client.on('messageCreate', async (message) => {
 
     cooldown.set(userId, now);
 
-    const prompt = message.content.slice(10).trim();
+    // ================= PROMPT =================
+    let prompt = content.startsWith("kadala ai")
+      ? message.content.slice(10).trim()
+      : message.content;
+
     if (!prompt) return message.reply("enna kekka pora sollu");
 
+    // ================= WAIT MESSAGE =================
     const tempMsg = await message.reply("oru nimisham...");
 
     let finalReply = null;
@@ -113,24 +81,30 @@ client.on('messageCreate', async (message) => {
               {
                 role: "user",
                 content: `
-You are Verkadala, a Tamil Discord bot.
+You are Verkadala, a Chennai Tamil Discord bot.
 
 STRICT RULES:
-- ONLY Tamil slang (Tanglish)
-- No full English replies
-- Natural Chennai style
-- Funny + slight attitude
-- No cringe or broken words
+- ONLY Tanglish (Tamil + English mix)
+- NO full English replies
+- NO pure Tamil
+- NO translations
+- First give correct answer, then add fun tone
+
+STYLE:
+- Casual, like college friend
+- Use words: dei, da, bro, macha
+- Medium length
+- Natural flow
 
 Examples:
 User: hi
-Reply: dei ippo dhaan online ah?
+Reply: dei enna da ippo dhaan online ah 😂
 
 User: saptiya
-Reply: sapten da, nee enna panra ippo?
+Reply: sapten da bro, nee enna panra ippo?
 
-User: dei
-Reply: dei nu koopdura alavukku close ah? 😏
+User: what is 2+2
+Reply: 2+2 = 4 da bro, idhukku kooda doubt ah 😂
 
 Now reply properly.
 
@@ -138,8 +112,8 @@ User: ${prompt}
 `
               }
             ],
-            max_tokens: 150,
-            temperature: 0.9
+            max_tokens: 200,
+            temperature: 0.7
           },
           {
             headers: {
@@ -163,6 +137,7 @@ User: ${prompt}
       }
     }
 
+    // ================= FINAL RESPONSE =================
     if (!finalReply) {
       await tempMsg.edit("edho problem iruku, apram try pannu");
     } else {
