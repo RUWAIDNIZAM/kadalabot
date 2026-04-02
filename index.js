@@ -1,8 +1,9 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 const express = require('express');
+const axios = require('axios');
 
-// 🌐 KEEP-ALIVE SERVER (Railway fix)
+// 🌐 KEEP ALIVE (Railway)
 const app = express();
 
 app.get("/", (req, res) => {
@@ -24,19 +25,17 @@ const client = new Client({
 });
 
 const FILE = './afk.json';
-
-// Load AFK data
 let afkUsers = {};
 if (fs.existsSync(FILE)) {
   afkUsers = JSON.parse(fs.readFileSync(FILE));
 }
 
-// Save AFK data
+// 💾 Save AFK
 function saveData() {
   fs.writeFileSync(FILE, JSON.stringify(afkUsers, null, 2));
 }
 
-// Time formatter
+// ⏱️ Time format
 function formatTime(ms) {
   const sec = Math.floor(ms / 1000);
   const min = Math.floor(sec / 60);
@@ -47,13 +46,16 @@ function formatTime(ms) {
   return `${sec}s`;
 }
 
-// ✅ READY EVENT
+// 🛑 Cooldown system
+const cooldown = new Map();
+
+// ✅ READY
 client.on('clientReady', () => {
   console.log("🌰 Verkadala is watching kadala...");
 });
 
-// 💬 MAIN LOGIC
-client.on('messageCreate', message => {
+// 💬 MAIN
+client.on('messageCreate', async message => {
   if (message.author.bot) return;
 
   const userId = message.author.id;
@@ -88,7 +90,49 @@ client.on('messageCreate', message => {
     );
   }
 
-  // 🔵 CHECK mentions
+  // 🤖 AI COMMAND
+  if (content.startsWith("kadala ai")) {
+    const now = Date.now();
+    const last = cooldown.get(userId) || 0;
+
+    if (now - last < 3000) {
+      return message.reply("🌰 dei dei slow down da 😭");
+    }
+
+    cooldown.set(userId, now);
+
+    const prompt = message.content.slice(10).trim();
+
+    if (!prompt) {
+      return message.reply("🌰 enna da kekra 😭");
+    }
+
+    try {
+      const res = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          contents: [
+            {
+              parts: [
+                {
+                  text: `You are Verkadala 🌰, a funny Tamil Discord bot. Reply in casual Tamil slang, slightly savage but friendly.\nUser: ${prompt}`
+                }
+              ]
+            }
+          ]
+        }
+      );
+
+      const reply = res.data.candidates[0].content.parts[0].text;
+
+      message.reply(`🌰 ${reply}`);
+    } catch (err) {
+      console.error(err);
+      message.reply("🌰 dei something broke 😭 try again later");
+    }
+  }
+
+  // 🔵 AFK mention check
   message.mentions.users.forEach(user => {
     if (afkUsers[user.id]) {
       const data = afkUsers[user.id];
