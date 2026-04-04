@@ -1,17 +1,16 @@
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const { GoogleGenerativeAI } = require("@google/generative-ai"); 
-const { OpenAI } = require("openai"); 
 const { Player } = require('discord-player');
 const express = require('express');
 const fs = require('fs');
 
 // ================= KEEP ALIVE =================
 const app = express();
-app.get("/", (req, res) => res.send("Kadala Watchman is Online, Vibing, Cooking, and Painting! 🎨🔥"));
+app.get("/", (req, res) => res.send("Kadala Watchman is Online and Vibing! 🔥"));
 app.listen(process.env.PORT || 3000);
 
-// ================= AI SETUP (Gemini Chat & OpenAI Images) =================
+// ================= AI SETUP (Gemini Chat) =================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 const systemInstruction = `
 You are 'Kadala Watchman', a peak GenZ Tamil guy in a Discord server.
@@ -23,8 +22,6 @@ You are 'Kadala Watchman', a peak GenZ Tamil guy in a Discord server.
 - Rules: Keep it short (1-3 sentences max). Don't be robotic. Use emojis like 💀, 🔥, 😂, 🫡.
 `;
 const chatModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ================= CLIENT SETUP =================
 const client = new Client({
@@ -39,7 +36,6 @@ const client = new Client({
 // ================= MUSIC PLAYER SETUP =================
 const player = new Player(client);
 
-// THE FIX: Properly load default extractors for version 6
 player.extractors.loadDefault().then(() => {
   console.log("Music Extractors loaded successfully! 🎧");
 }).catch(err => console.error("Error loading extractors:", err));
@@ -138,34 +134,6 @@ client.on('messageCreate', async (message) => {
     return message.reply("poiten da 🚶 meet you later share-u!");
   }
 
-  // ================= 🎨 IMAGE GENERATION COMMAND =================
-  if (content.startsWith("kadala imagine ") || content.startsWith("kadalai imagine ")) {
-    const prompt = message.content.replace(/^(kadala|kadalai) imagine /i, '').trim();
-    if (!prompt) return message.reply("Enna imagine பண்ணனும் nu clear ah sollu da pangu! 🧐");
-
-    await message.channel.sendTyping();
-    message.reply(`Hold tightly share-u! Naa peak artist mathiri peak scene-u generate panitu iruken... 🎨✍️ This will take around 30 seconds!`);
-
-    try {
-      const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        style: "vivid" 
-      });
-
-      const imageUrl = response.data[0].url;
-      return message.reply({ content: `Here is your peak creation mamba! 🫡🔥\n**Prompt:** ${prompt}`, files: [imageUrl] });
-    } catch (e) {
-      console.error(e);
-      if (e.status === 400 && e.error?.code === 'content_policy_violation') {
-        return message.reply(`Dei mamba, intha prompt nalla illai da. Intha logic ah OpenAI accept pannathu! Safe prompt try pannu. 💀❌`);
-      }
-      return message.reply(`Image server down pola blood. Naa appuram peak painting try panren! 😵‍💫`);
-    }
-  }
-
   // ================= DJ COMMANDS =================
   const isDJCommand = /^(kadala|kadalai) (play|skip|stop|queue|pause|resume)/i.test(content);
   
@@ -230,9 +198,11 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  // 4. AI CHAT LOGIC
+  // ================= AI CHAT LOGIC =================
   const isReplyToBot = message.reference && message.mentions.repliedUser?.id === client.user.id;
-  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|play|skip|stop|queue|pause|resume|vc|imagine)(.*)/i);
+  
+  // Note: the (?!...) logic makes sure the bot doesn't send music/vc commands to Gemini
+  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|play|skip|stop|queue|pause|resume|vc)(.*)/i);
 
   if (aiPrefixMatch || isReplyToBot) {
     await message.channel.sendTyping();
