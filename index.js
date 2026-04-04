@@ -1,15 +1,17 @@
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const { GoogleGenerativeAI } = require("@google/generative-ai"); 
+const { Player } = require('discord-player');
+const { DefaultExtractors } = require('@discord-player/extractor');
 const express = require('express');
 const fs = require('fs');
 
 // ================= KEEP ALIVE =================
 const app = express();
-app.get("/", (req, res) => res.send("Kadala is Online 🔥"));
+app.get("/", (req, res) => res.send("Kadala Watchman is Online, Vibing, and Cooking 🔥"));
 app.listen(process.env.PORT || 3000);
 
-// ================= AI SETUP (GenZ Tamil Personality) =================
+// ================= AI SETUP (Gemini 2.5 Flash) =================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 
 const systemInstruction = `
@@ -18,14 +20,11 @@ You are 'Kadala Watchman', a peak GenZ Tamil guy in a Discord server.
 - Style: Use GenZ slang like 'vibe', 'scene-u', 'mamba', 'lit', 'clutch', 'gubeer', 'pangu', 'maams', 'blood', 'share-u'.
 - Tone: Be funny, sarcastic (nakkaal), and friendly.
 - Address user as: 'da', 'mamba', 'pangu', or 'pulla'.
-- Context awareness: You will be provided with the recent chat history. Use it to understand the flow of the conversation, but only reply to the latest message.
+- Context awareness: You will be provided with the recent chat history. Use it to understand the flow, but only reply to the latest message.
 - Rules: Keep it short (1-3 sentences max). Don't be robotic. Use emojis like 💀, 🔥, 😂, 🫡.
 `;
 
-const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash", 
-  systemInstruction 
-});
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
 
 // ================= CLIENT SETUP =================
 const client = new Client({
@@ -37,9 +36,20 @@ const client = new Client({
   ]
 });
 
-const processedMessages = new Set();
+// ================= MUSIC PLAYER SETUP =================
+const player = new Player(client);
+player.extractors.loadMulti(DefaultExtractors);
 
-// ================= AFK SYSTEM =================
+player.events.on('playerStart', (queue, track) => {
+  queue.metadata.channel.send(`🎧 Ippo idhaan trend-u! Playing: **${track.title}** 🔥 Vibe panlaam mamba!`);
+});
+
+player.events.on('emptyQueue', (queue) => {
+  queue.metadata.channel.send(`Pattu mudinjichu pangu. Vera ethaachum play pannu, illana na kelamburen! 🚶`);
+});
+
+// ================= UTILITIES & AFK =================
+const processedMessages = new Set();
 const FILE = './afk.json';
 let afkUsers = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE)) : {};
 const saveAFK = () => fs.writeFileSync(FILE, JSON.stringify(afkUsers, null, 2));
@@ -82,9 +92,9 @@ const funFacts = [
 
 // ================= EVENTS =================
 client.once('ready', () => {
-  console.log("Verkadala running 🔥");
+  console.log("Verkadala is Fully Operational 🔥");
   
-  // Fun Fact Loop (10 mins)
+  // Fun Fact Loop (Every 10 mins)
   setInterval(() => {
     client.guilds.cache.forEach(guild => {
       const channel = guild.channels.cache.find(c => c.isTextBased() && c.name.includes('general')) 
@@ -96,10 +106,10 @@ client.once('ready', () => {
         channel.send(`🧠 **Fun Fact:** ${fact}`);
       }
     });
-  }, 10 * 60 * 1000);
+  }, 10 * 60 * 1000); 
 });
 
-// ================= STREAM DETECT =================
+// Stream Presence Logic
 client.on('voiceStateUpdate', (oldState, newState) => {
   if (newState.streaming && newState.channel) {
     if (!getVoiceConnection(newState.guild.id)) {
@@ -126,7 +136,7 @@ client.on('messageCreate', async (message) => {
   const content = message.content.toLowerCase();
   const userId = message.author.id;
 
-  // 1. AFK Remove Logic
+  // 1. AFK Logic
   if (afkUsers[userId]) {
     const timeAway = Date.now() - afkUsers[userId].time;
     delete afkUsers[userId];
@@ -134,61 +144,115 @@ client.on('messageCreate', async (message) => {
     return message.reply(`dei comeback ah 😏 **${formatTime(timeAway)}** wait panna vachitiye mamba!`);
   }
 
-  // 2. Specific Hardcoded Commands Check
-  const isAfkCmd = /^(kadala|kadalai) afk/i.test(content);
-  const isVcJoinCmd = /^(kadala|kadalai) (vc join|join vc)/i.test(content);
-  const isVcLeaveCmd = /^(kadala|kadalai) (vc leave|leave vc)/i.test(content);
-  
-  if (isAfkCmd) {
+  if (/^(kadala|kadalai) afk/i.test(content)) {
     afkUsers[userId] = { time: Date.now() };
     saveAFK();
     return message.reply("seri da AFK 😴 safe ah poitu vaa mamba!");
   }
 
-  if (isVcJoinCmd) {
+  // 2. Simple VC Commands
+  if (/^(kadala|kadalai) (vc join|join vc)/i.test(content)) {
     const vc = message.member.voice.channel;
     if (!vc) return message.reply("VC la po da first-u! 😭");
     joinVoiceChannel({ channelId: vc.id, guildId: vc.guild.id, adapterCreator: vc.guild.voiceAdapterCreator, selfDeaf: false, selfMute: false });
     return message.reply("vanthuruken mamba 😎 vibe panlaam!");
   }
 
-  if (isVcLeaveCmd) {
+  if (/^(kadala|kadalai) (vc leave|leave vc)/i.test(content)) {
     const conn = getVoiceConnection(message.guild.id);
     if (!conn) return message.reply("already veliya thaan mamba iruken! 💀");
     conn.destroy();
     return message.reply("poiten da 🚶 meet you later share-u!");
   }
 
-  // 3. AI Chat Logic (Context + Triggers)
-  // Trigger if it starts with "kadala <text>" OR if someone replied directly to the bot
+  // 3. DJ COMMANDS
+  const isDJCommand = /^(kadala|kadalai) (play|skip|stop|queue|pause|resume)/i.test(content);
+  
+  if (isDJCommand) {
+    const args = content.split(' ');
+    const command = args[1]; 
+    const query = message.content.split(' ').slice(2).join(' '); 
+    
+    const queue = player.nodes.get(message.guild.id);
+    const channel = message.member.voice.channel;
+
+    switch (command) {
+      case 'play':
+        if (!query) return message.reply("Enna paatu venum nu sollu da pangu! 🎵");
+        if (!channel) return message.reply("VC la poi okkaru first-u! Appo thaan paatu poduvean 😭");
+        
+        await message.channel.send(`Told you I'm a DJ! Theditu iruken wait pannu... 🔍`);
+        try {
+          await player.play(channel, query, {
+            nodeOptions: { metadata: message, leaveOnEmpty: true, leaveOnEnd: false }
+          });
+        } catch (e) {
+          console.error(e);
+          return message.reply("Paatu kedaikala da mamba! Spelling ah check pannu illa vera paatu kelu. 💀");
+        }
+        break;
+
+      case 'skip':
+        if (!queue || !queue.isPlaying()) return message.reply("Etha da skip panrathu? Paatayum kaanom onnayum kaanom! 💀");
+        queue.node.skip();
+        return message.reply("Intha paatu vibe aagala pola, OP Skip done! ⏭️");
+
+      case 'stop':
+        if (!queue) return message.reply("Naanga already amaithiya thaan irukom! 🤫");
+        queue.delete();
+        return message.reply("Paatu off panniyachu, naa appidiye kelamburen! 🚶");
+
+      case 'pause':
+        if (!queue || !queue.isPlaying()) return message.reply("Onnume odalaye da! 💀");
+        queue.node.setPaused(true);
+        return message.reply("Paatu konja neram pause la irukattum ⏸️");
+
+      case 'resume':
+        if (!queue || queue.isPlaying()) return message.reply("Already oditu thaan da iruku! 🎶");
+        queue.node.setPaused(false);
+        return message.reply("Vibe thirumba start aagiduchu! ▶️");
+
+      case 'queue':
+        if (!queue || !queue.isPlaying()) return message.reply("Queue kaaliya iruku da mamba! Kadala play potu vibe etthu! 💿");
+        
+        const currentTrack = queue.currentTrack;
+        const tracks = queue.tracks.toArray().slice(0, 5); 
+        
+        let queueString = `**🎧 Ippo Oduthu:** ${currentTrack.title}\n\n**Up Next-u:**\n`;
+        if (tracks.length === 0) queueString += "Avlo thaan, queue la vera paatu illai! ❌";
+        else {
+          tracks.forEach((track, index) => {
+            queueString += `**${index + 1}.** ${track.title}\n`;
+          });
+        }
+        return message.reply(queueString);
+    }
+    return; // Stops here so DJ commands don't trigger the AI chat
+  }
+
+  // 4. AI CHAT LOGIC
   const isReplyToBot = message.reference && message.mentions.repliedUser?.id === client.user.id;
-  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(.*)/i);
+  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|play|skip|stop|queue|pause|resume|vc)(.*)/i);
 
   if (aiPrefixMatch || isReplyToBot) {
-    await message.channel.sendTyping(); // Shows "Kadala Watchman is typing..."
-
+    await message.channel.sendTyping();
     let userPrompt = aiPrefixMatch ? aiPrefixMatch[2].trim() : message.content;
     if (!userPrompt) return message.reply("Enna pangu, blank ah message anupura? Ethachum kelu! 💀");
 
     try {
-      // Fetch the last 6 messages in the channel to build context
       const fetchedMessages = await message.channel.messages.fetch({ limit: 6 });
       let historyText = "--- RECENT CHAT HISTORY ---\n";
-      
       fetchedMessages.reverse().forEach(msg => {
         if (msg.content) {
-          const authorName = msg.author.id === client.user.id ? "Kadala Watchman (You)" : msg.author.username;
+          const authorName = msg.author.id === client.user.id ? "Kadala Watchman" : msg.author.username;
           historyText += `${authorName}: ${msg.content}\n`;
         }
       });
       historyText += "--- END HISTORY ---\n\n";
-      
-      // Combine history with the specific instruction to reply
       const finalPrompt = `${historyText}Now, reply to ${message.author.username}'s latest message.`;
 
       const result = await model.generateContent(finalPrompt);
       let text = result.response.text();
-      
       return message.reply(text.length > 2000 ? text.substring(0, 1990) + "..." : text);
     } catch (e) {
       console.error(e);
