@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
-const { GoogleGenAI } = require("@google/genai"); 
+const { GoogleGenerativeAI } = require("@google/generative-ai"); 
 const express = require('express');
 const fs = require('fs');
 
@@ -10,7 +10,9 @@ app.get("/", (req, res) => res.send("Kadala is Online 🔥"));
 app.listen(process.env.PORT || 3000);
 
 // ================= AI SETUP (GenZ Tamil Personality) =================
-const genAI = new GoogleGenAI(process.env.GEMINI_KEY);
+// Note: Ensure GEMINI_KEY is set in your Railway Variables!
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+
 const systemInstruction = `
 You are 'Kadala Watchman', a peak GenZ Tamil guy.
 - Language: Strictly Tanglish (Mix of Tamil and English).
@@ -94,10 +96,10 @@ client.once('ready', () => {
         channel.send(`🧠 **Fun Fact:** ${fact}`);
       }
     });
-  }, 10 * 60 * 1000);
+  }, 10 * 60 * 1000); // 10 minutes
 });
 
-// Stream Presence Logic
+// ================= STREAM DETECT =================
 client.on('voiceStateUpdate', (oldState, newState) => {
   if (newState.streaming && newState.channel) {
     if (!getVoiceConnection(newState.guild.id)) {
@@ -115,7 +117,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
   }
 });
 
-// Main Message Handler
+// ================= MAIN MESSAGE HANDLER =================
 client.on('messageCreate', async (message) => {
   if (processedMessages.has(message.id) || message.author.bot) return;
   processedMessages.add(message.id);
@@ -124,7 +126,7 @@ client.on('messageCreate', async (message) => {
   const content = message.content.toLowerCase();
   const userId = message.author.id;
 
-  // AFK Logic
+  // AFK Remove Logic
   if (afkUsers[userId]) {
     const timeAway = Date.now() - afkUsers[userId].time;
     delete afkUsers[userId];
@@ -132,15 +134,18 @@ client.on('messageCreate', async (message) => {
     return message.reply(`dei comeback ah 😏 **${formatTime(timeAway)}** wait panna vachitiye mamba!`);
   }
 
+  // AFK Set Logic
   if (/^(kadala|kadalai) afk/i.test(content)) {
     afkUsers[userId] = { time: Date.now() };
     saveAFK();
     return message.reply("seri da AFK 😴 safe ah poitu vaa mamba!");
   }
 
-  // AI Command
-  if (content.startsWith("kadala ai") || content.startsWith("kadalai ai")) {
-    const prompt = message.content.split(' ').slice(2).join(' ');
+  // AI Command Logic: "kadala ai <prompt>"
+  if (content.startsWith("kadala ai ") || content.startsWith("kadalai ai ")) {
+    // Extract everything after "kadala ai" or "kadalai ai"
+    const prompt = message.content.replace(/^(kadala|kadalai) ai /i, '').trim();
+    
     if (!prompt) return message.reply("Enna pangu, blank ah message anupura? Ethachum kelu! 💀");
 
     try {
@@ -148,11 +153,12 @@ client.on('messageCreate', async (message) => {
       let text = result.response.text();
       return message.reply(text.length > 2000 ? text.substring(0, 1990) + "..." : text);
     } catch (e) {
+      console.error(e);
       return message.reply("AI konjam confuse aayiduchu blood. Konja neram kazhuithu vaa! 😵‍💫");
     }
   }
 
-  // VC Commands
+  // VC Join Logic
   if (/^(kadala|kadalai) (vc join|join vc)/i.test(content)) {
     const vc = message.member.voice.channel;
     if (!vc) return message.reply("VC la po da first-u! 😭");
@@ -160,6 +166,7 @@ client.on('messageCreate', async (message) => {
     return message.reply("vanthuruken mamba 😎 vibe panlaam!");
   }
 
+  // VC Leave Logic
   if (/^(kadala|kadalai) (vc leave|leave vc)/i.test(content)) {
     const conn = getVoiceConnection(message.guild.id);
     if (!conn) return message.reply("already veliya thaan mamba iruken! 💀");
