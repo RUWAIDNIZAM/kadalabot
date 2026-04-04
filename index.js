@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const { GoogleGenerativeAI } = require("@google/generative-ai"); 
-const { Player } = require('discord-player');
+const { Player, QueryType } = require('discord-player'); // Added QueryType for the bypass!
 const express = require('express');
 const fs = require('fs');
 
@@ -149,9 +149,10 @@ client.on('messageCreate', async (message) => {
         if (!query) return message.reply("Enna paatu venum nu sollu da pangu! 🎵");
         if (!channel) return message.reply("VC la poi okkaru first-u! Appo thaan paatu poduvean 😭");
         
-        await message.channel.send(`Told you I'm a DJ! Theditu iruken wait pannu... 🔍`);
+        await message.channel.send(`Told you I'm a DJ! SoundCloud la theditu iruken wait pannu... 🔍`);
         try {
           await player.play(channel, query, {
+            searchEngine: QueryType.SOUNDCLOUD_SEARCH, // 👈 THE CLUTCH FIX (Bypasses YouTube completely)
             nodeOptions: { metadata: message, leaveOnEmpty: true, leaveOnEnd: false }
           });
         } catch (e) {
@@ -200,8 +201,6 @@ client.on('messageCreate', async (message) => {
 
   // ================= AI CHAT LOGIC =================
   const isReplyToBot = message.reference && message.mentions.repliedUser?.id === client.user.id;
-  
-  // Note: the (?!...) logic makes sure the bot doesn't send music/vc commands to Gemini
   const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|play|skip|stop|queue|pause|resume|vc)(.*)/i);
 
   if (aiPrefixMatch || isReplyToBot) {
