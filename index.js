@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-ceonst { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 const express = require('express');
 const fs = require('fs');
 
@@ -18,7 +18,6 @@ const client = new Client({
   ]
 });
 
-const cooldown = new Map();
 const processedMessages = new Set();
 
 // ================= AFK =================
@@ -38,122 +37,51 @@ function formatTime(ms) {
 
 // ================= 100 FUN FACTS =================
 const funFacts = [
-"Octopus has 3 hearts",
-"Honey never spoils",
-"Bananas are berries",
-"Sharks older than trees",
-"Space smells like metal",
-"Butterflies taste with feet",
-"Cows have best friends",
-"Penguins propose with pebbles",
-"Sun is white actually",
-"Your brain uses 20% energy",
-"Hot water freezes faster",
-"Sloths can hold breath longer than dolphins",
-"Wombat poop is cube shaped",
-"Humans glow in dark (low level)",
-"Ants don’t sleep",
-"Koalas have fingerprints",
-"Jellyfish are immortal (some)",
-"Venus spins backwards",
-"Tardigrades survive space",
-"Snakes can fly (glide)",
-"Octopus escapes jars easily",
-"Frogs drink through skin",
-"Cats sleep 70% of life",
-"Dolphins have names",
-"Trees can communicate",
-"Sharks detect electricity",
-"Babies have more bones",
-"Fire has no shadow",
-"Clouds are heavy",
-"Birds don’t urinate",
-"Spiders have blue blood",
-"Earth not perfect sphere",
-"Some metals explode in water",
-"Sound travels faster in water",
-"Human nose detects trillion smells",
-"Moon moving away slowly",
-"Neptune has fastest winds",
-"Gold edible in small amounts",
-"Some turtles breathe through butt",
-"Sea otters hold hands",
-"Glass is slow liquid (sorta)",
-"Lightning hotter than sun",
-"Humans share DNA with bananas",
-"Some fish change gender",
-"Chickens remember faces",
-"Space is silent",
-"Your stomach gets new lining",
-"Brain feels no pain",
-"Rats laugh",
-"Plants grow faster with music",
-"Water expands when freezing",
-"Some crabs use tools",
-"Sharks never stop swimming",
-"Some frogs freeze and live",
-"Earth rotates slower over time",
-"Some whales sing songs",
-"Eyes heal fast",
-"Some birds mimic humans",
-"Ants farm fungi",
-"Some fish walk on land",
-"Rain has smell called petrichor",
-"Some snakes see heat",
-"Butterflies remember being caterpillars",
-"Sun will die someday",
-"Some bacteria eat radiation",
-"Owls rotate head 270°",
-"Some lizards run on water",
-"Earth has magnetic poles shifting",
-"Bees dance to communicate",
-"Some frogs glow",
-"Some animals see UV",
-"Elephants mourn death",
-"Some birds sleep mid-flight",
-"Some spiders fly using silk",
-"Your body has electricity",
-"Stars twinkle due to atmosphere",
-"Some insects survive without head",
-"Time moves slower near gravity",
-"Black holes bend time",
-"Some fish glow in dark",
-"Humans have unique tongue print",
-"Some birds steal food",
-"Volcano lightning exists",
-"Some animals never age",
-"Some worms cut regenerate",
-"Some fish freeze and survive",
-"Some animals fake death",
-"Some animals invisible in water",
-"Moon causes tides",
-"Some clouds glow at night",
-"Some fish see polarized light",
-"Some birds navigate via stars",
-"Some plants eat insects",
-"Some bacteria survive vacuum",
-"Some insects hear with legs",
-"Some animals regrow limbs",
-"Some animals live without brain"
-];
-
-// ================= VC STREAM COMMENTS =================
-const streamComments = [
-"dei stream smooth ah iruku 👀",
-"lag konjam varudhu da 😭",
-"mass gameplay 🔥",
-"dei careful da",
-"nice aim bro",
-"dei clutch chance 👀",
-"bro focus da",
-"dei enemy pakkathula 😭",
-"semma play da",
-"dei panic pannaadha 😭"
+  "Octopus has 3 hearts", "Honey never spoils", "Bananas are berries", "Sharks older than trees",
+  "Space smells like metal", "Butterflies taste with feet", "Cows have best friends", "Penguins propose with pebbles",
+  "Sun is white actually", "Your brain uses 20% energy", "Hot water freezes faster", "Sloths can hold breath longer than dolphins",
+  "Wombat poop is cube shaped", "Humans glow in dark (low level)", "Ants don’t sleep", "Koalas have fingerprints",
+  "Jellyfish are immortal (some)", "Venus spins backwards", "Tardigrades survive space", "Snakes can fly (glide)",
+  "Octopus escapes jars easily", "Frogs drink through skin", "Cats sleep 70% of life", "Dolphins have names",
+  "Trees can communicate", "Sharks detect electricity", "Babies have more bones", "Fire has no shadow",
+  "Clouds are heavy", "Birds don’t urinate", "Spiders have blue blood", "Earth not perfect sphere",
+  "Some metals explode in water", "Sound travels faster in water", "Human nose detects trillion smells", "Moon moving away slowly",
+  "Neptune has fastest winds", "Gold edible in small amounts", "Some turtles breathe through butt", "Sea otters hold hands",
+  "Glass is slow liquid (sorta)", "Lightning hotter than sun", "Humans share DNA with bananas", "Some fish change gender",
+  "Chickens remember faces", "Space is silent", "Your stomach gets new lining", "Brain feels no pain",
+  "Rats laugh", "Plants grow faster with music", "Water expands when freezing", "Some crabs use tools",
+  "Sharks never stop swimming", "Some frogs freeze and live", "Earth rotates slower over time", "Some whales sing songs",
+  "Eyes heal fast", "Some birds mimic humans", "Ants farm fungi", "Some fish walk on land",
+  "Rain has smell called petrichor", "Some snakes see heat", "Butterflies remember being caterpillars", "Sun will die someday",
+  "Some bacteria eat radiation", "Owls rotate head 270°", "Some lizards run on water", "Earth has magnetic poles shifting",
+  "Bees dance to communicate", "Some frogs glow", "Some animals see UV", "Elephants mourn death",
+  "Some birds sleep mid-flight", "Some spiders fly using silk", "Your body has electricity", "Stars twinkle due to atmosphere",
+  "Some insects survive without head", "Time moves slower near gravity", "Black holes bend time", "Some fish glow in dark",
+  "Humans have unique tongue print", "Some birds steal food", "Volcano lightning exists", "Some animals never age",
+  "Some worms cut regenerate", "Some fish freeze and survive", "Some animals fake death", "Some animals invisible in water",
+  "Moon causes tides", "Some clouds glow at night", "Some fish see polarized light", "Some birds navigate via stars",
+  "Some plants eat insects", "Some bacteria survive vacuum", "Some insects hear with legs", "Some animals regrow limbs",
+  "Some animals live without brain", "Wombats poop in cubes to mark territory", "Sloths take two weeks to digest food", "A day on Venus is longer than a year on Venus"
 ];
 
 // ================= READY =================
-client.once('clientReady', () => {
+client.once('ready', () => {
   console.log("Verkadala running 🔥");
+
+  // ================= FUN FACT LOOP (Every 10 mins) =================
+  setInterval(() => {
+    client.guilds.cache.forEach(guild => {
+      // Find a channel named 'general', or fallback to system channel, or fallback to first available text channel
+      const generalChannel = guild.channels.cache.find(c => c.isTextBased() && c.name.includes('general')) 
+        || guild.systemChannel 
+        || guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me).has('SendMessages'));
+
+      if (!generalChannel) return;
+
+      const fact = funFacts[Math.floor(Math.random() * funFacts.length)];
+      generalChannel.send(`🧠 **Fun Fact:** ${fact}`);
+    });
+  }, 10 * 60 * 1000); // 10 minutes in milliseconds
 });
 
 // ================= STREAM DETECT =================
@@ -186,31 +114,6 @@ client.on('voiceStateUpdate', (oldState, newState) => {
   }
 });
 
-// ================= VC COMMENT LOOP =================
-setInterval(() => {
-  client.guilds.cache.forEach(guild => {
-    const connection = getVoiceConnection(guild.id);
-    if (!connection) return;
-
-    const text = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased());
-    if (!text) return;
-
-    const msg = streamComments[Math.floor(Math.random() * streamComments.length)];
-    text.send(`🎧 VC: ${msg}`);
-  });
-}, 2 * 60 * 1000);
-
-// ================= FUN FACT LOOP =================
-setInterval(() => {
-  client.guilds.cache.forEach(guild => {
-    const text = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased());
-    if (!text) return;
-
-    const fact = funFacts[Math.floor(Math.random() * funFacts.length)];
-    text.send(`🧠 Fun Fact: ${fact}`);
-  });
-}, 5 * 60 * 1000);
-
 // ================= MESSAGE =================
 client.on('messageCreate', async (message) => {
   if (processedMessages.has(message.id)) return;
@@ -237,8 +140,8 @@ client.on('messageCreate', async (message) => {
     return message.reply("seri da AFK 😴");
   }
 
-  // VC JOIN
-  if (content === "kadala vc join") {
+  // VC JOIN (Flexible: "kadala/kadalai vc join" OR "kadala/kadalai join vc")
+  if (/^(kadala|kadalai) (vc join|join vc)/i.test(content)) {
     const vc = message.member.voice.channel;
     if (!vc) return message.reply("VC la po da 😭");
 
@@ -253,8 +156,8 @@ client.on('messageCreate', async (message) => {
     return message.reply("vanthuruken da 😎");
   }
 
-  // VC LEAVE
-  if (content === "kadala vc leave") {
+  // VC LEAVE (Flexible: "kadala/kadalai vc leave" OR "kadala/kadalai leave vc")
+  if (/^(kadala|kadalai) (vc leave|leave vc)/i.test(content)) {
     const connection = getVoiceConnection(message.guild.id);
     if (!connection) return message.reply("already veliya 😭");
 
