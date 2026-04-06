@@ -15,7 +15,7 @@ You are 'Kadala Watchman', a peak GenZ Tamil guy in a Discord server.
 - Language: Strictly Tanglish (Mix of Tamil and English).
 - Style: Use GenZ slang like 'vibe', 'scene-u', 'mamba', 'lit', 'clutch', 'gubeer', 'pangu', 'maams', 'blood', 'share-u'.
 - Tone: Be funny, sarcastic (nakkaal), and friendly.
-- Address user as: 'da', 'maapla', 'pangu', or 'pulla' , 'nanba'.
+- Address user as: 'da', 'mamba', 'pangu', or 'pulla'.
 - Context awareness: You will be provided with the recent chat history. Use it to understand the flow, but only reply to the latest message.
 - Rules: Keep it short (1-3 sentences max). Don't be robotic. Use emojis like 💀, 🔥, 😂, 🫡.
 `;
@@ -23,7 +23,6 @@ You are 'Kadala Watchman', a peak GenZ Tamil guy in a Discord server.
 let currentKeyIndex = -1;
 
 function getAvailableKeys() {
-  // CHANGED: Now looking for the new variable names to bust the cache!
   return [
     process.env.API_KEY_1,
     process.env.API_KEY_2,
@@ -53,6 +52,30 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates
   ]
 });
+
+// ================= THE BLACK BOX LOGGER 🕵️‍♂️ =================
+const logFile = './kadala-crash.log';
+
+function spitLog(title, error) {
+  const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+  const errorDetails = error?.stack || error?.message || JSON.stringify(error) || "Unknown Error";
+  
+  const formattedLog = `\n=========================================
+🚨 [CRASH REPORT - ${timestamp}]
+⚠️ TYPE: ${title}
+-----------------------------------------
+${errorDetails}
+=========================================\n`;
+
+  console.error(formattedLog);
+  try { fs.appendFileSync(logFile, formattedLog); } catch (fsErr) { console.error("Bro, couldn't write log!", fsErr); }
+}
+
+process.on('unhandledRejection', (reason) => spitLog('UNHANDLED PROMISE REJECTION (Silent Crash)', reason));
+process.on('uncaughtException', (err) => spitLog('FATAL UNCAUGHT EXCEPTION (Bot Died)', err));
+client.on('error', (err) => spitLog('DISCORD CLIENT ERROR', err));
+client.on('disconnect', () => spitLog('DISCORD DISCONNECTED', 'Lost connection to Gateway.'));
+client.on('shardError', error => spitLog('WEBSOCKET SHARD ERROR', error));
 
 // ================= UTILITIES, AFK & RATE LIMITER =================
 const processedMessages = new Set();
@@ -125,14 +148,13 @@ client.on('messageCreate', async (message) => {
   const content = message.content.toLowerCase();
   const userId = message.author.id;
 
-  // --- 1. DEBUG COMMAND (To verify your keys) ---
+  // --- 1. DEBUG COMMAND ---
   if (content === 'kadala debug keys') {
     const keys = getAvailableKeys();
-    if (keys.length === 0) return message.reply("Bro, I see ZERO keys. Railway is completely empty. 💀");
+    if (keys.length === 0) return message.reply("Bro, I see ZERO keys. Railway variables `API_KEY_1`, `API_KEY_2`, etc. are empty. 💀");
     
     let debugMsg = `**Debug Info:**\nI found **${keys.length}** API keys loaded in my system.\n`;
     keys.forEach((k, i) => {
-      // Shows only the first 6 characters to prove it's the new key, keeping the rest safe
       debugMsg += `Slot ${i + 1}: Starts with \`${k.substring(0, 6)}...\`\n`; 
     });
     return message.reply(debugMsg);
@@ -159,14 +181,19 @@ client.on('messageCreate', async (message) => {
   if (/^(kadala|kadalai)\s+(vc join|join vc)/i.test(content)) {
     const vc = message.member.voice.channel;
     if (!vc) return message.reply("Bro, you need to join a Voice Channel first! 😭");
-    joinVoiceChannel({ 
-        channelId: vc.id, 
-        guildId: vc.guild.id, 
-        adapterCreator: vc.guild.voiceAdapterCreator, 
-        selfDeaf: false, 
-        selfMute: false 
-    });
-    return message.reply("Joined the VC, bro! 😎");
+    try {
+      joinVoiceChannel({ 
+          channelId: vc.id, 
+          guildId: vc.guild.id, 
+          adapterCreator: vc.guild.voiceAdapterCreator, 
+          selfDeaf: false, 
+          selfMute: false 
+      });
+      return message.reply("Joined the VC, bro! 😎");
+    } catch (e) {
+      spitLog("VC JOIN FAILED", e);
+      return message.reply("Bro, I couldn't join the VC. Check the logs! 💀");
+    }
   }
 
   if (/^(kadala|kadalai)\s+(vc leave|leave vc)/i.test(content)) {
@@ -178,7 +205,6 @@ client.on('messageCreate', async (message) => {
 
   // --- 4. AI CHAT LOGIC ---
   const isReplyToBot = message.reference && message.mentions.repliedUser?.id === client.user.id;
-  // Adjusted regex to ensure it ignores 'vc join', 'vc leave', and 'debug'
   const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|vc join|join vc|vc leave|leave vc|debug)(.*)/i);
 
   if (aiPrefixMatch || isReplyToBot) {
@@ -218,7 +244,7 @@ client.on('messageCreate', async (message) => {
     while (attempts < totalKeys && !success) {
       try {
         const chatModel = getNextChatModel(); 
-        if (!chatModel) return message.reply("Admin, you haven't added the API keys to Railway properly! 😭");
+        if (!chatModel) return message.reply("Admin, you haven't added `API_KEY_1` to Railway properly! 😭");
 
         const result = await chatModel.generateContent(finalPrompt);
         finalResponseText = result.response.text();
@@ -228,14 +254,14 @@ client.on('messageCreate', async (message) => {
           console.log(`[AI Error] Slot ${currentKeyIndex + 1} is out of limit. Auto-switching to next slot...`);
           attempts++;
         } else {
-          console.error(e);
-          return message.reply("AI is a bit confused right now. Some technical issue! 😵‍💫");
+          spitLog("AI GENERATION ERROR", e);
+          return message.reply("AI is a bit confused right now. Check the crash log! 😵‍💫");
         }
       }
     }
 
     if (!success) {
-      return message.reply("Bro, all the API keys are completely exhausted! 💀 They will reset tomorrow, or you need to add brand new keys from different accounts.");
+      return message.reply("Bro, all the API keys are completely exhausted! 💀 They will reset tomorrow, or you need to add brand new keys.");
     }
 
     return message.reply(finalResponseText.length > 2000 ? finalResponseText.substring(0, 1990) + "..." : finalResponseText);
