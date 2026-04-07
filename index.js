@@ -6,7 +6,7 @@ const fs = require('fs');
 
 // ================= KEEP ALIVE =================
 const app = express();
-app.get("/", (req, res) => res.send("Kadala Watchman is Online with AFK Ping Defender! 🔑🔥"));
+app.get("/", (req, res) => res.send("Kadala Watchman is Online with Counting Game! 🔑🔥"));
 app.listen(process.env.PORT || 3000);
 
 // ================= AI SETUP =================
@@ -46,7 +46,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessageReactions
   ]
 });
 
@@ -101,6 +102,10 @@ function checkRateLimit(userId) {
   return { allowed: true };
 }
 
+// ================= COUNTING GAME VARIABLES =================
+let currentCount = 0;
+let lastCounterId = null;
+
 // ================= EVENTS =================
 client.once('ready', () => {
   console.log(`Verkadala is Fully Operational 🔥 | Loaded ${getAvailableKeys().length} API Keys.`);
@@ -113,7 +118,51 @@ client.on('messageCreate', async (message) => {
   const content = message.content.toLowerCase();
   const userId = message.author.id;
 
-  // --- 1. NEW: THE AFK PING DEFENDER 🛡️ ---
+  // --- 1. THE COUNTING GAME 🔢 ---
+  // Works ONLY in channels with 'counting' or 'count' in the name
+  if (message.channel.name.includes('counting') || message.channel.name.includes('count')) {
+    if (/^\d+$/.test(content)) { 
+      const parsedNum = parseInt(content);
+
+      // Rule 1: Cannot count twice in a row
+      if (userId === lastCounterId) {
+        const wrongNumber = currentCount; // Save before reset
+        currentCount = 0;
+        lastCounterId = null;
+        message.react('❌');
+        return message.reply(`Dei gubeer! Oruvane thodarndhu 2 thadava count panna koodathu! 💀 \n**Game Reset to 0!** Start from 1 da pangu.`);
+      } 
+      // Rule 2: Wrong number or repeated number
+      else if (parsedNum !== currentCount + 1) {
+        const expected = currentCount + 1;
+        currentCount = 0;
+        lastCounterId = null;
+        message.react('❌');
+        return message.reply(`Dei mamba, math theriyaatha da unaku? The next number was **${expected}**! 💀 \n**Game Reset to 0!** Start from 1.`);
+      } 
+      // Rule 3: Correct Number!
+      else {
+        currentCount = parsedNum;
+        lastCounterId = userId;
+        message.react('✅');
+
+        // Milestones
+        if (currentCount === 50) {
+          message.react('🥉');
+          message.channel.send(`🎉 Yovv! **50 reached!** 🥉 Bronze tier unlocked da pasangala! Vibe it up!`);
+        } else if (currentCount === 100) {
+          message.react('🥇');
+          message.channel.send(`🔥 THALAIVAA! **100 CENTURY!** 🥇 Gold tier reached! Pakka clutch!`);
+        } else if (currentCount === 150) {
+          message.react('💎');
+          message.channel.send(`💎 VERA LEVEL MAMBA! **150 reached!** Diamond bloods! Enna speed uh!`);
+        }
+        return; // Stops here so AI doesn't reply
+      }
+    }
+  }
+
+  // --- 2. THE AFK PING DEFENDER 🛡️ ---
   if (message.mentions.users.size > 0) {
     message.mentions.users.forEach(user => {
       if (afkUsers[user.id]) {
@@ -124,14 +173,19 @@ client.on('messageCreate', async (message) => {
     });
   }
 
-  // --- 2. THE BUNKER (Can I Bunk?) ---
+  // --- 3. CREDITS COMMAND ---
+  if (/^(kadala|kadalai)\s+(credits|who made you|creator)/i.test(content)) {
+    return message.reply("😎 Naan oru masterpiece da!\n\n👑 **Created by:** `@ruwaid`\n🔥 **Hardware MVP:** `@hislaptop` (Paavam antha machine)\n🧠 **AI Partner:** `@Gemini`");
+  }
+
+  // --- 4. THE BUNKER (Can I Bunk?) ---
   const bunkMatch = content.match(/^(kadala|kadalai)\s+bunk\s+(\d+)\s+(\d+)/i);
   if (bunkMatch) {
     const totalClasses = parseInt(bunkMatch[2]);
     const attendedClasses = parseInt(bunkMatch[3]);
 
     if (attendedClasses > totalClasses) {
-      return message.reply("Dei gubeer! Total classes vida nee eppadi da adhigama attend panna mudiyum? 💀 Check the numbers (Format: `kadala bunk [Total_Classes] [Attended]`).");
+      return message.reply("Dei gubeer! Total classes vida nee eppadi da adhigama attend panna mudiyum? 💀 Check the numbers.");
     }
 
     const percentage = (attendedClasses / totalClasses) * 100;
@@ -140,18 +194,18 @@ client.on('messageCreate', async (message) => {
     if (percentage >= 75) {
       const bunksAllowed = Math.floor((attendedClasses / 0.75) - totalClasses);
       if (bunksAllowed > 0) {
-        replyText += `😎 Thalaivaa! Nee safe zone la irukka. Innum **${bunksAllowed} classes** thairiyama bunk adikkalam! Vibe start pannu! 🛌🎮`;
+        replyText += `😎 Thalaivaa! Nee safe zone la irukka. Innum **${bunksAllowed} classes** thairiyama bunk adikkalam!`;
       } else {
-        replyText += `⚠️ Border la thongitu irukka mamba! Inimey bunk adicha maattikuva. College ku kelaambu! 🚶‍♂️🎒`;
+        replyText += `⚠️ Border la thongitu irukka mamba! Inimey bunk adicha maattikuva. College ku kelaambu!`;
       }
     } else {
       const needed = Math.ceil(((0.75 * totalClasses) - attendedClasses) / 0.25);
-      replyText += `💀 Danger Zone da mamba! 75% thoda innum **${needed} classes** continuously poganum. Vibe aagatha, poi padi! 🏃‍♂️📚`;
+      replyText += `💀 Danger Zone da mamba! 75% thoda innum **${needed} classes** continuously poganum. Padi!`;
     }
     return message.reply(replyText);
   }
 
-  // --- 3. AFK LEADERBOARD ---
+  // --- 5. AFK LEADERBOARD ---
   if (/^(kadala|kadalai)\s+(afk leaderboard|leaderboard)/i.test(content)) {
     const sortedStats = Object.entries(afkStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
     
@@ -169,7 +223,7 @@ client.on('messageCreate', async (message) => {
     return message.reply(lbString);
   }
 
-  // --- 4. AFK LOGIC (Set & Return) ---
+  // --- 6. AFK LOGIC (Set & Return) ---
   if (afkUsers[userId]) {
     const timeAway = Date.now() - afkUsers[userId].time;
     const reasonText = afkUsers[userId].reason ? `(Reason: ${afkUsers[userId].reason})` : "";
@@ -190,7 +244,7 @@ client.on('messageCreate', async (message) => {
     return message.reply(`seri da AFK 😴 **Reason:** ${reason} | safe ah poitu vaa mamba!`);
   }
 
-  // --- 5. VC JOIN / LEAVE ---
+  // --- 7. VC JOIN / LEAVE ---
   if (/^(kadala|kadalai)\s+(vc join|join vc)/i.test(content)) {
     const vc = message.member.voice.channel;
     if (!vc) return message.reply("Bro, you need to join a Voice Channel first! 😭");
@@ -205,9 +259,9 @@ client.on('messageCreate', async (message) => {
     return message.reply("Left the VC! 🚶‍♂️");
   }
 
-  // --- 6. AI CHAT LOGIC ---
+  // --- 8. AI CHAT LOGIC ---
   const isReplyToBot = message.reference && message.mentions.repliedUser?.id === client.user.id;
-  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|vc join|join vc|vc leave|leave vc|bunk|leaderboard|debug)(.*)/i);
+  const aiPrefixMatch = message.content.match(/^(kadala|kadalai)\s+(?!afk|vc join|join vc|vc leave|leave vc|bunk|leaderboard|debug|credits)(.*)/i);
 
   if (aiPrefixMatch || isReplyToBot) {
     let userPrompt = aiPrefixMatch ? aiPrefixMatch[2].trim() : message.content;
