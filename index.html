@@ -3,113 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verkadala Hub</title>
+    <title>Verkadala Hub | Ruwaidcool</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.9); --accent: #6366f1; --border: rgba(255,255,255,0.1); }
         html { scroll-behavior: smooth; }
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; }
         body { background: var(--bg); color:white; min-height:100vh; }
-        
-        nav { 
-            width: 100%; background: #ffffff; padding: 18px 6%; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-        .nav-logo { color: #020617; font-weight: 800; font-size: 1.3rem; }
-        .nav-links { display: flex; gap: 30px; list-style: none; }
-        .nav-links a { color: #020617; text-decoration: none; font-size: 0.85rem; font-weight: 800; opacity: 0.8; }
 
-        .main-content { padding: 40px 6%; width: 100%; max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 320px 1fr 320px; gap: 30px; }
-        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 24px; padding: 25px; margin-bottom: 25px; }
+        /* SPLASH SCREEN */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020617; display: flex; justify-content: center;
+            align-items: center; z-index: 9999; transition: opacity 0.8s ease;
+        }
+        .splash-text { font-size: 1.2rem; font-weight: 800; letter-spacing: 3px; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+        /* NAVIGATION */
+        nav { 
+            width: 100%; background: #ffffff; padding: 20px 6%; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+        .logo { color: #020617; font-weight: 800; font-size: 1.4rem; text-decoration: none; }
+        .links { display: flex; gap: 30px; list-style: none; }
+        .links a { color: #020617; text-decoration: none; font-size: 0.85rem; font-weight: 800; transition: 0.2s; }
+        .links a:hover { color: var(--accent); }
+
+        /* GRID LAYOUT */
+        .main { padding: 40px 6%; max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 320px 1fr 320px; gap: 30px; }
+        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 28px; padding: 25px; margin-bottom: 30px; }
         
-        .pfp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); }
-        .rank-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 15px; }
+        .pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--accent); }
+        .item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 18px; }
         
-        @media (max-width: 1100px) { .main-content { grid-template-columns: 1fr; } }
+        .timer-box { font-size: 0.7rem; font-weight: 800; color: var(--accent); margin-bottom: 15px; }
+
+        footer { padding: 60px; text-align: center; opacity: 0.6; font-size: 0.9rem; border-top: 1px solid var(--border); }
+        @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } .links { display: none; } }
     </style>
 </head>
 <body>
 
+    <div id="splash">
+        <div class="splash-text">POWERED BY RUWAIDCOOL SOFTWARE</div>
+    </div>
+
     <nav>
-        <div class="nav-logo">VERKADALA HUB</div>
-        <ul class="nav-links">
+        <a href="#" class="logo">VERKADALA HUB</a>
+        <ul class="links">
             <li><a href="#">DASHBOARD</a></li>
             <li><a href="#staff-wall">MODS</a></li>
             <li><a href="#system-wall">SYSTEM</a></li>
         </ul>
-        <div style="color: #22c55e; font-weight: 900; font-size: 0.8rem;">LIVE</div>
+        <div style="color:#22c55e; font-weight:900;">LIVE ●</div>
     </nav>
 
-    <div class="main-content">
-        <div class="side">
+    <div class="main">
+        <div>
             <div class="card" style="text-align:center">
-                <p style="opacity:0.6; font-size:0.7rem;">CURRENT COUNT</p>
-                <h1 id="curr" style="font-size:3.5rem; color:var(--accent)">0</h1>
+                <p style="opacity:0.6; font-size:0.7rem; text-transform:uppercase;">Counting Game</p>
+                <h1 id="curr" style="font-size:3.5rem; color:var(--accent); margin:10px 0;">0</h1>
             </div>
             <div class="card">
-                <h3>ABOUT</h3>
-                <p style="font-size:0.8rem; margin-top:10px; color:#94a3b8">Unhinged server made by <b>ruwaidcool</b>. 💀</p>
+                <h3 style="font-size:0.9rem; color:var(--accent)">ABOUT SERVER</h3>
+                <p style="font-size:0.85rem; margin-top:10px; color:#94a3b8; line-height:1.6;">
+                    This server is <b>unhinged server made by ruwaidcool</b>. Enter at your own risk pangu! 💀🔥
+                </p>
             </div>
         </div>
 
-        <div class="center">
+        <div>
             <div class="card">
                 <h2>🏆 TOP YAPPER RANKINGS</h2>
                 <div id="lb-list"></div>
             </div>
+            
             <div class="card" id="staff-wall">
                 <h2>👑 STAFF WALL</h2>
-                <div id="staff-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;"></div>
+                <div class="timer-box">REFRESHING IN: <span id="timer">30</span>S</div>
+                <div id="staff-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:10px;"></div>
             </div>
-            <div class="card">
-                <h2>🔢 COUNTING KINGS</h2>
-                <div id="count-lb"></div>
-            </div>
+
             <div class="card" id="system-wall">
-                <h2>⚙️ SYSTEM</h2>
-                <div id="sys-info"></div>
+                <h2>⚙️ SYSTEM DIAGNOSTICS</h2>
+                <div id="sys-info" style="margin-top:10px; font-size:0.9rem;"></div>
             </div>
         </div>
 
-        <div class="side">
+        <div>
             <div class="card">
-                <h3>ONLINE (<span id="on-count">0</span>)</h3>
-                <div id="on-list"></div>
+                <h3 style="color:#22c55e;">ONLINE (<span id="on-count">0</span>)</h3>
+                <div id="on-list" style="margin-top:15px;"></div>
             </div>
             <div class="card">
-                <h3>😴 AFK</h3>
-                <div id="afk-list"></div>
+                <h3 style="color:#fbbf24;">😴 AFK MAMBAS</h3>
+                <div id="afk-list" style="margin-top:15px;"></div>
             </div>
         </div>
     </div>
 
+    <footer>Made with ❤️ by <b>Ruwaid</b></footer>
+
     <script>
+        // Splash logic
+        setTimeout(() => {
+            const splash = document.getElementById('splash');
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.display = 'none', 800);
+        }, 2000);
+
+        let countdown = 30;
+        const timerEl = document.getElementById('timer');
+
         async function fetchAll() {
             try {
-                const [s, o, c, a, st, sys, clb] = await Promise.all([
+                const [s, o, c, a, st, sys] = await Promise.all([
                     fetch('/api/stats').then(r => r.json()),
                     fetch('/api/online').then(r => r.json()),
                     fetch('/api/counting').then(r => r.json()),
                     fetch('/api/afk').then(r => r.json()),
                     fetch('/api/staff').then(r => r.json()),
-                    fetch('/api/system').then(r => r.json()),
-                    fetch('/api/counting-lb').then(r => r.json())
+                    fetch('/api/system').then(r => r.json())
                 ]);
 
                 document.getElementById('curr').innerText = c.current;
                 document.getElementById('on-count').innerText = o.count;
+                document.getElementById('lb-list').innerHTML = s.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.count} msgs</small></div></div>`).join('');
+                document.getElementById('staff-list').innerHTML = st.map(u => `<div style="text-align:center"><img src="${u.avatar}" class="pfp"><br><b>${u.username}</b><br><small style="color:var(--accent)">${u.role}</small></div>`).join('');
+                document.getElementById('sys-info').innerHTML = `<p>Ping: ${sys.ping} | Uptime: ${sys.uptime} | Status: Operational</p>`;
+                document.getElementById('on-list').innerHTML = o.members.map(m => `<div class="item"><img src="${m.avatar}" style="width:25px; border-radius:50%"> ${m.username}</div>`).join('');
+                document.getElementById('afk-list').innerHTML = a.map(u => `<div class="item">😴 ${u.username}: "${u.reason}"</div>`).join('') || 'None';
                 
-                document.getElementById('lb-list').innerHTML = s.map(u => `<div class="rank-item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.count} msgs</small></div></div>`).join('');
-                document.getElementById('count-lb').innerHTML = clb.map(u => `<div class="rank-item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.points} correct counts</small></div></div>`).join('');
-                document.getElementById('staff-list').innerHTML = st.map(u => `<div style="text-align:center"><img src="${u.avatar}" class="pfp"><br><b>${u.username}</b></div>`).join('');
-                document.getElementById('sys-info').innerHTML = `<p>Ping: ${sys.ping} | Uptime: ${sys.uptime}</p>`;
-                document.getElementById('on-list').innerHTML = o.members.map(m => `<div>● ${m.username}</div>`).join('');
-                document.getElementById('afk-list').innerHTML = a.map(u => `<div>😴 ${u.username}: ${u.reason}</div>`).join('') || 'None';
-
+                countdown = 30;
             } catch(e) { console.log("Updating..."); }
         }
-        setInterval(fetchAll, 600000); // 10 MINUTE UPDATE AS REQUESTED
+
+        setInterval(() => {
+            countdown--;
+            if (countdown < 0) countdown = 30;
+            timerEl.innerText = countdown;
+        }, 1000);
+
+        setInterval(fetchAll, 30000); 
         fetchAll();
     </script>
 </body>
