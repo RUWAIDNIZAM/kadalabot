@@ -6,17 +6,17 @@
     <title>Verkadala Hub</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.6); --accent: #6366f1; --border: rgba(255,255,255,0.1); }
+        :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.7); --accent: #6366f1; --border: rgba(255,255,255,0.1); }
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; }
         body { background: var(--bg); color:white; min-height:100vh; overflow-x: hidden; display: flex; flex-direction: column; }
-
+        
         #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.5s; }
         nav { width: 90%; max-width: 1100px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 50px; }
         
-        .main { padding: 120px 5% 40px; width: 100%; max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; }
-        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 28px; padding: 22px; margin-bottom: 20px; transition: 0.3s; }
-        .item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 18px; }
-        .pfp { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent); }
+        .main { padding: 110px 5% 40px; width: 100%; max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; }
+        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 28px; padding: 22px; margin-bottom: 20px; }
+        .item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 18px; }
+        .pfp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); }
 
         @media (max-width: 1100px) { .main { grid-template-columns: 1fr; padding-top: 100px; } nav { width: 95%; } }
     </style>
@@ -32,17 +32,17 @@
     <div class="main">
         <div>
             <div class="card" style="text-align:center">
-                <p style="opacity:0.6; font-size:0.6rem; text-transform:uppercase;">Squad Strength</p>
-                <h1 id="total-mem" style="font-size:3.5rem; color:var(--accent);">0</h1>
+                <p style="opacity:0.6; font-size:0.65rem; text-transform:uppercase;">Squad Strength</p>
+                <h1 id="total-mem" style="font-size:4rem; color:var(--accent); margin:10px 0;">0</h1>
             </div>
             <div class="card"><h4>ABOUT</h4><p style="font-size:0.8rem; opacity:0.7; margin-top:8px;">Unhinged server by <b>ruwaidcool</b>. 💀</p></div>
         </div>
 
         <div>
             <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <b>🏆 TOP YAPPER RANKINGS</b>
-                    <span style="font-size:0.6rem; color:var(--accent);">SYNC: <span id="cd">30</span>S</span>
+                    <span style="font-size:0.6rem; color:var(--accent); font-weight:800;">SYNC: <span id="cd">30</span>S</span>
                 </div>
                 <div id="lb-list"></div>
             </div>
@@ -58,19 +58,23 @@
         </div>
     </div>
 
-    <footer>Made with ❤️ by <b>Ruwaid</b></footer>
-
     <script>
         setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 1500);
 
         function render(data) {
-            if(!data || !data.stats) return;
+            if(!data || !data.yappers) return;
             document.getElementById('total-mem').innerText = data.totalMembers || 0;
             document.getElementById('on-count').innerText = data.online?.count || 0;
-            document.getElementById('lb-list').innerHTML = data.yappers.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.count} msgs</small></div></div>`).join('');
-            document.getElementById('count-lb').innerHTML = data.counters.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.points} points</small></div></div>`).join('');
-            document.getElementById('on-list').innerHTML = (data.online?.members || []).slice(0, 8).map(m => `<div class="item" style="background:none; padding:5px;"><img src="${m.avatar}" style="width:25px; border-radius:50%; border:1px solid #22c55e;"> <span>${m.username}</span></div>`).join('');
-            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `<div class="item" style="border-left:3px solid #fbbf24;"><div><b>${u.username}</b><br><small>"${u.reason}"</small></div></div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem; text-align:center;">None</p>';
+            
+            document.getElementById('lb-list').innerHTML = data.yappers.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.count} messages</small></div></div>`).join('');
+            document.getElementById('count-lb').innerHTML = data.counters.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.points} points</small></div></div>`).join('') || '<p style="opacity:0.5; font-size:0.7rem;">Start counting!</p>';
+            document.getElementById('on-list').innerHTML = (data.online?.members || []).slice(0, 8).map(m => `<div class="item" style="background:none; padding:5px;"><img src="${m.avatar}" style="width:25px; border-radius:50%; border:1px solid #22c55e;"> <span>${m.username}</span></div>`).join('') || '<p style="opacity:0.5; font-size:0.7rem;">None</p>';
+            
+            // Fixed AFK list with Reasons
+            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `
+                <div class="item" style="border-left:3px solid #fbbf24; padding:10px;">
+                    <div><b>${u.username}</b><br><small style="font-style:italic; opacity:0.8">"${u.reason}"</small></div>
+                </div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem; text-align:center;">Everyone is awake!</p>';
         }
 
         async function fetchAll() {
@@ -79,7 +83,7 @@
                 const data = await res.json();
                 if (data.totalMembers) { localStorage.setItem('kadala_cache', JSON.stringify(data)); render(data); }
                 count = 30;
-            } catch(e) { console.log("Updating..."); }
+            } catch(e) { console.log("Sync error"); }
         }
 
         const cached = localStorage.getItem('kadala_cache');
