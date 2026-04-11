@@ -1,117 +1,94 @@
-const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verkadala Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.6); --accent: #6366f1; --border: rgba(255,255,255,0.1); }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; }
+        body { background: var(--bg); color:white; min-height:100vh; overflow-x: hidden; display: flex; flex-direction: column; }
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const SITE_URL = "https://kadalabot.up.railway.app/";
-
-// ================= STORAGE =================
-const STATS_FILE = './userStats.json';     // Yapping
-const COUNT_STATS_FILE = './countLB.json'; // Counting Leaderboard
-const GAME_FILE = './counting.json';       // Active Game State
-const AFK_FILE = './afk.json';
-
-const loadJSON = (file, fallback) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : fallback;
-let userStats = loadJSON(STATS_FILE, {});
-let countLB = loadJSON(COUNT_STATS_FILE, {});
-let gameData = loadJSON(GAME_FILE, { current: 0, highscore: 0, lastUser: null });
-let afkUsers = loadJSON(AFK_FILE, {});
-
-let cachedResponse = null; 
-
-const saveAll = () => {
-    fs.writeFileSync(STATS_FILE, JSON.stringify(userStats, null, 2));
-    fs.writeFileSync(COUNT_STATS_FILE, JSON.stringify(countLB, null, 2));
-    fs.writeFileSync(GAME_FILE, JSON.stringify(gameData, null, 2));
-    fs.writeFileSync(AFK_FILE, JSON.stringify(afkUsers, null, 2));
-};
-
-// ================= MASTER SYNC =================
-const updateMasterCache = async () => {
-    try {
-        const guild = client.guilds.cache.first();
-        if (!guild) return;
-
-        const m = await guild.members.fetch({ withPresences: true });
-        const onlineMem = m.filter(mem => mem.presence && mem.presence.status !== 'offline' && !mem.user.bot);
+        #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: 0.5s; }
+        nav { width: 90%; max-width: 1100px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 50px; }
         
-        const yappers = Object.values(userStats).sort((a, b) => b.count - a.count).filter(u => !u.isBot).slice(0, 5).map(s => {
-            const mem = guild.members.cache.find(msg => msg.user.username === s.username);
-            return { ...s, avatar: mem ? mem.user.displayAvatarURL() : 'https://cdn.discordapp.com/embed/avatars/0.png' };
-        });
+        .main { padding: 120px 5% 40px; width: 100%; max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; }
+        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 28px; padding: 22px; margin-bottom: 20px; transition: 0.3s; }
+        .item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 18px; }
+        .pfp { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent); }
 
-        const counters = Object.values(countLB).sort((a, b) => b.points - a.points).slice(0, 5).map(s => {
-            const mem = guild.members.cache.find(msg => msg.user.username === s.username);
-            return { ...s, avatar: mem ? mem.user.displayAvatarURL() : '' };
-        });
+        @media (max-width: 1100px) { .main { grid-template-columns: 1fr; padding-top: 100px; } nav { width: 95%; } }
+    </style>
+</head>
+<body>
+    <div id="splash"><b>POWERED BY RUWAIDCOOL SOFTWARE</b></div>
 
-        const afk = Object.keys(afkUsers).map(id => {
-            const mem = guild.members.cache.get(id);
-            return { username: mem ? mem.user.username : "Mamba", reason: afkUsers[id].reason, since: afkUsers[id].time, avatar: mem ? mem.user.displayAvatarURL() : '' };
-        });
+    <nav>
+        <b style="font-size:1.1rem;">VERKADALA HUB</b>
+        <div style="color: #22c55e; font-size: 0.7rem; font-weight: 900;">LIVE ●</div>
+    </nav>
 
-        cachedResponse = { 
-            totalMembers: guild.memberCount,
-            yappers, counters, online: { count: onlineMem.size, members: onlineMem.map(mem => ({ username: mem.user.username, avatar: mem.user.displayAvatarURL() })) },
-            afk, system: { ping: client.ws.ping + "ms", uptime: Math.floor(process.uptime() / 60) + "m" }
-        };
-    } catch (e) { console.error("Sync error"); }
-};
+    <div class="main">
+        <div>
+            <div class="card" style="text-align:center">
+                <p style="opacity:0.6; font-size:0.6rem; text-transform:uppercase;">Squad Strength</p>
+                <h1 id="total-mem" style="font-size:3.5rem; color:var(--accent);">0</h1>
+            </div>
+            <div class="card"><h4>ABOUT</h4><p style="font-size:0.8rem; opacity:0.7; margin-top:8px;">Unhinged server by <b>ruwaidcool</b>. 💀</p></div>
+        </div>
 
-// ================= API =================
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get("/api/all", (req, res) => res.json(cachedResponse || {}));
+        <div>
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <b>🏆 TOP YAPPER RANKINGS</b>
+                    <span style="font-size:0.6rem; color:var(--accent);">SYNC: <span id="cd">30</span>S</span>
+                </div>
+                <div id="lb-list"></div>
+            </div>
+            <div class="card">
+                <b>🔢 COUNTING KINGS</b>
+                <div id="count-lb" style="margin-top:15px;"></div>
+            </div>
+        </div>
 
-app.listen(PORT, () => console.log(`Engine live on ${PORT}`));
+        <div>
+            <div class="card"><h4>ONLINE (<span id="on-count">0</span>)</h4><div id="on-list" style="margin-top:15px;"></div></div>
+            <div class="card"><h4>😴 AFK REASONS</h4><div id="afk-list" style="margin-top:15px;"></div></div>
+        </div>
+    </div>
 
-// ================= BOT =================
-const client = new Client({ intents: [3276799] });
+    <footer>Made with ❤️ by <b>Ruwaid</b></footer>
 
-client.on('ready', () => { updateMasterCache(); setInterval(updateMasterCache, 30000); });
+    <script>
+        setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 1500);
 
-client.on('messageCreate', async (message) => {
-    if (message.author.bot) return;
-    const userId = message.author.id;
-    const content = message.content.toLowerCase();
-
-    // 1. YAPPER STATS
-    if (!userStats[userId]) userStats[userId] = { username: message.author.username, count: 0 };
-    userStats[userId].count++;
-    userStats[userId].username = message.author.username;
-
-    // 2. COUNTING GAME INTEGRATION
-    if (message.channel.name.includes('count')) {
-        const num = parseInt(content);
-        if (!isNaN(num)) {
-            if (num !== gameData.current + 1 || userId === gameData.lastUser) {
-                message.react('❌'); gameData.current = 0; gameData.lastUser = null;
-            } else {
-                message.react('✅'); gameData.current = num; gameData.lastUser = userId;
-                if (!countLB[userId]) countLB[userId] = { username: message.author.username, points: 0 };
-                countLB[userId].points++;
-            }
+        function render(data) {
+            if(!data || !data.stats) return;
+            document.getElementById('total-mem').innerText = data.totalMembers || 0;
+            document.getElementById('on-count').innerText = data.online?.count || 0;
+            document.getElementById('lb-list').innerHTML = data.yappers.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.count} msgs</small></div></div>`).join('');
+            document.getElementById('count-lb').innerHTML = data.counters.map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small>${u.points} points</small></div></div>`).join('');
+            document.getElementById('on-list').innerHTML = (data.online?.members || []).slice(0, 8).map(m => `<div class="item" style="background:none; padding:5px;"><img src="${m.avatar}" style="width:25px; border-radius:50%; border:1px solid #22c55e;"> <span>${m.username}</span></div>`).join('');
+            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `<div class="item" style="border-left:3px solid #fbbf24;"><div><b>${u.username}</b><br><small>"${u.reason}"</small></div></div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem; text-align:center;">None</p>';
         }
-    }
 
-    // 3. AFK COMMANDS
-    if (afkUsers[userId]) { delete afkUsers[userId]; message.reply("Welcome back! Website updated."); }
+        async function fetchAll() {
+            try {
+                const res = await fetch('/api/all');
+                const data = await res.json();
+                if (data.totalMembers) { localStorage.setItem('kadala_cache', JSON.stringify(data)); render(data); }
+                count = 30;
+            } catch(e) { console.log("Updating..."); }
+        }
 
-    if (content.startsWith('kadala afk')) {
-        const r = message.content.split('afk')[1]?.trim() || "Ethuko poirukan";
-        afkUsers[userId] = { time: Date.now(), reason: r };
-        message.reply(`AFK set mamba! Reason: ${r}\n*Tip: View live at ${SITE_URL}*`);
-    }
-
-    // 4. DISCORD LEADERBOARDS
-    if (content === 'kadala leaderboard') {
-        const topYappers = Object.values(userStats).sort((a,b)=>b.count-a.count).slice(0,5).map((u,i)=>`${i+1}. ${u.username} (${u.count} msgs)`).join('\n');
-        return message.reply(`🏆 **TOP YAPPERS**\n${topYappers}\n\n*Full stats: ${SITE_URL}*`);
-    }
-
-    saveAll();
-    updateMasterCache();
-});
-
-client.login(process.env.TOKEN);
+        const cached = localStorage.getItem('kadala_cache');
+        if (cached) render(JSON.parse(cached));
+        
+        fetchAll();
+        let count = 30;
+        setInterval(() => { count--; if(count < 0) count = 30; document.getElementById('cd').innerText = count; }, 1000);
+        setInterval(fetchAll, 30000);
+    </script>
+</body>
+</html>
