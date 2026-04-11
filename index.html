@@ -1,163 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verkadala Hub | Mobile Elite</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.6); --accent: #6366f1; --border: rgba(255,255,255,0.1); }
-        html { scroll-behavior: smooth; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans',sans-serif; }
+const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const SITE_URL = "https://kadalabot.up.railway.app/";
+
+// ================= STORAGE =================
+const STATS_FILE = './userStats.json';     // Yapping
+const COUNT_STATS_FILE = './countLB.json'; // Counting Leaderboard
+const GAME_FILE = './counting.json';       // Active Game State
+const AFK_FILE = './afk.json';
+
+const loadJSON = (file, fallback) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : fallback;
+let userStats = loadJSON(STATS_FILE, {});
+let countLB = loadJSON(COUNT_STATS_FILE, {});
+let gameData = loadJSON(GAME_FILE, { current: 0, highscore: 0, lastUser: null });
+let afkUsers = loadJSON(AFK_FILE, {});
+
+let cachedResponse = null; 
+
+const saveAll = () => {
+    fs.writeFileSync(STATS_FILE, JSON.stringify(userStats, null, 2));
+    fs.writeFileSync(COUNT_STATS_FILE, JSON.stringify(countLB, null, 2));
+    fs.writeFileSync(GAME_FILE, JSON.stringify(gameData, null, 2));
+    fs.writeFileSync(AFK_FILE, JSON.stringify(afkUsers, null, 2));
+};
+
+// ================= MASTER SYNC =================
+const updateMasterCache = async () => {
+    try {
+        const guild = client.guilds.cache.first();
+        if (!guild) return;
+
+        const m = await guild.members.fetch({ withPresences: true });
+        const onlineMem = m.filter(mem => mem.presence && mem.presence.status !== 'offline' && !mem.user.bot);
         
-        body { background: var(--bg); color:white; min-height:100vh; overflow-x: hidden; display: flex; flex-direction: column; }
+        const yappers = Object.values(userStats).sort((a, b) => b.count - a.count).filter(u => !u.isBot).slice(0, 5).map(s => {
+            const mem = guild.members.cache.find(msg => msg.user.username === s.username);
+            return { ...s, avatar: mem ? mem.user.displayAvatarURL() : 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        });
 
-        /* ANIMATED BACKGROUND */
-        .blob { position: fixed; width: 60vw; height: 60vw; background: rgba(99, 102, 241, 0.1); filter: blur(80px); border-radius: 50%; z-index: -1; animation: move 20s infinite alternate; }
-        @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(60%, 50%); } }
+        const counters = Object.values(countLB).sort((a, b) => b.points - a.points).slice(0, 5).map(s => {
+            const mem = guild.members.cache.find(msg => msg.user.username === s.username);
+            return { ...s, avatar: mem ? mem.user.displayAvatarURL() : '' };
+        });
 
-        /* SPLASH SCREEN */
-        #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease; text-align: center; padding: 20px; }
-        .splash-text { font-size: 1rem; font-weight: 800; letter-spacing: 3px; line-height: 1.5; }
+        const afk = Object.keys(afkUsers).map(id => {
+            const mem = guild.members.cache.get(id);
+            return { username: mem ? mem.user.username : "Mamba", reason: afkUsers[id].reason, since: afkUsers[id].time, avatar: mem ? mem.user.displayAvatarURL() : '' };
+        });
 
-        /* --- MOBILE FRIENDLY GLASS NAV --- */
-        nav { 
-            width: 92%; max-width: 1100px; background: var(--glass); backdrop-filter: blur(20px); 
-            border: 1px solid var(--border); padding: 12px 25px; display: flex; 
-            justify-content: space-between; align-items: center; position: fixed; 
-            top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 50px;
+        cachedResponse = { 
+            totalMembers: guild.memberCount,
+            yappers, counters, online: { count: onlineMem.size, members: onlineMem.map(mem => ({ username: mem.user.username, avatar: mem.user.displayAvatarURL() })) },
+            afk, system: { ping: client.ws.ping + "ms", uptime: Math.floor(process.uptime() / 60) + "m" }
+        };
+    } catch (e) { console.error("Sync error"); }
+};
+
+// ================= API =================
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get("/api/all", (req, res) => res.json(cachedResponse || {}));
+
+app.listen(PORT, () => console.log(`Engine live on ${PORT}`));
+
+// ================= BOT =================
+const client = new Client({ intents: [3276799] });
+
+client.on('ready', () => { updateMasterCache(); setInterval(updateMasterCache, 30000); });
+
+client.on('messageCreate', async (message) => {
+    if (message.author.bot) return;
+    const userId = message.author.id;
+    const content = message.content.toLowerCase();
+
+    // 1. YAPPER STATS
+    if (!userStats[userId]) userStats[userId] = { username: message.author.username, count: 0 };
+    userStats[userId].count++;
+    userStats[userId].username = message.author.username;
+
+    // 2. COUNTING GAME INTEGRATION
+    if (message.channel.name.includes('count')) {
+        const num = parseInt(content);
+        if (!isNaN(num)) {
+            if (num !== gameData.current + 1 || userId === gameData.lastUser) {
+                message.react('❌'); gameData.current = 0; gameData.lastUser = null;
+            } else {
+                message.react('✅'); gameData.current = num; gameData.lastUser = userId;
+                if (!countLB[userId]) countLB[userId] = { username: message.author.username, points: 0 };
+                countLB[userId].points++;
+            }
         }
-        .logo { color: #ffffff; font-weight: 800; font-size: 1rem; text-decoration: none; }
-        .live-tag { color: #22c55e; font-size: 0.7rem; font-weight: 900; background: rgba(34,197,94,0.1); padding: 4px 10px; border-radius: 20px; }
+    }
 
-        /* --- RESPONSIVE GRID --- */
-        .main { 
-            padding: 100px 4% 40px; width: 100%; max-width: 1500px; margin: 0 auto; 
-            display: grid; grid-template-columns: 320px 1fr 320px; gap: 20px; 
-        }
+    // 3. AFK COMMANDS
+    if (afkUsers[userId]) { delete afkUsers[userId]; message.reply("Welcome back! Website updated."); }
 
-        .card { background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 20px; }
-        
-        /* RANKINGS & ITEMS */
-        .rank-item { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid transparent; }
-        .pfp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
-        
-        .timer-text { font-size: 0.6rem; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+    if (content.startsWith('kadala afk')) {
+        const r = message.content.split('afk')[1]?.trim() || "Ethuko poirukan";
+        afkUsers[userId] = { time: Date.now(), reason: r };
+        message.reply(`AFK set mamba! Reason: ${r}\n*Tip: View live at ${SITE_URL}*`);
+    }
 
-        /* --- MOBILE OVERRIDES --- */
-        @media (max-width: 1100px) {
-            .main { grid-template-columns: 1fr; padding-top: 90px; }
-            .side-col-left { order: 1; }
-            .center-col { order: 2; }
-            .side-col-right { order: 3; }
-            .card { padding: 18px; border-radius: 20px; }
-            nav { padding: 10px 20px; width: 95%; }
-            .logo { font-size: 0.9rem; }
-            #total-mem { font-size: 3rem !important; }
-        }
+    // 4. DISCORD LEADERBOARDS
+    if (content === 'kadala leaderboard') {
+        const topYappers = Object.values(userStats).sort((a,b)=>b.count-a.count).slice(0,5).map((u,i)=>`${i+1}. ${u.username} (${u.count} msgs)`).join('\n');
+        return message.reply(`🏆 **TOP YAPPERS**\n${topYappers}\n\n*Full stats: ${SITE_URL}*`);
+    }
 
-        footer { padding: 40px; text-align: center; opacity: 0.5; font-size: 0.8rem; }
-    </style>
-</head>
-<body>
-    <div class="blob"></div>
-    <div id="splash"><b class="splash-text">POWERED BY<br>RUWAIDCOOL SOFTWARE</b></div>
+    saveAll();
+    updateMasterCache();
+});
 
-    <nav>
-        <a href="#" class="logo">VERKADALA HUB</a>
-        <div class="live-tag">LIVE ●</div>
-    </nav>
-
-    <div class="main">
-        <div class="side-col-left">
-            <div class="card" style="text-align:center">
-                <p style="opacity:0.6; font-size:0.65rem; text-transform:uppercase; letter-spacing: 1px;">Total Members</p>
-                <h1 id="total-mem" style="font-size:3.5rem; color:var(--accent); margin:5px 0;">0</h1>
-            </div>
-            <div class="card">
-                <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 0.9rem;">ABOUT</h4>
-                <p style="font-size:0.8rem; color:#94a3b8; line-height:1.5;">Unhinged server made by <b>ruwaidcool</b>. 💀🔥</p>
-            </div>
-        </div>
-
-        <div class="center-col">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <b style="font-size: 0.9rem;">🏆 TOP YAPPER RANKINGS</b>
-                    <span class="timer-text">SYNC: <span id="cd">30</span>S</span>
-                </div>
-                <div id="lb-list"></div>
-            </div>
-        </div>
-
-        <div class="side-col-right">
-            <div class="card">
-                <h4 style="color:#22c55e; margin-bottom: 12px; font-size: 0.9rem;">ONLINE (<span id="on-count">0</span>)</h4>
-                <div id="on-list"></div>
-            </div>
-            <div class="card">
-                <h4 style="color:#fbbf24; margin-bottom: 12px; font-size: 0.9rem;">😴 AFK MAMBAS</h4>
-                <div id="afk-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <footer>Made with ❤️ by <b>Ruwaid</b></footer>
-
-    <script>
-        // Splash logic
-        setTimeout(() => { 
-            const s = document.getElementById('splash'); 
-            s.style.opacity = '0'; 
-            setTimeout(() => s.style.display = 'none', 500); 
-        }, 1500);
-
-        function render(data) {
-            if(!data) return;
-            document.getElementById('total-mem').innerText = data.totalMembers || 0;
-            document.getElementById('on-count').innerText = data.online?.count || 0;
-            
-            document.getElementById('lb-list').innerHTML = (data.stats || []).map(u => `
-                <div class="rank-item">
-                    <img src="${u.avatar}" class="pfp">
-                    <div style="overflow:hidden">
-                        <b style="font-size:0.85rem">${u.username}</b><br>
-                        <small style="opacity:0.5">${u.count} messages</small>
-                    </div>
-                </div>`).join('');
-
-            document.getElementById('on-list').innerHTML = (data.online?.members || []).slice(0, 12).map(m => `
-                <div class="rank-item" style="padding:8px; background:none; margin-bottom:5px;">
-                    <img src="${m.avatar}" style="width:28px; height:28px; border-radius:50%; border:1px solid #22c55e;"> 
-                    <span style="font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.username}</span>
-                </div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem;">None</p>';
-            
-            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `
-                <div class="rank-item" style="padding:10px; border-left:3px solid #fbbf24;">
-                    <div style="overflow:hidden">
-                        <b style="font-size:0.8rem">${u.username}</b><br>
-                        <small style="opacity:0.7; font-style:italic;">"${u.reason}"</small>
-                    </div>
-                </div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem; text-align:center;">Everyone is awake!</p>';
-        }
-
-        async function fetchAll() {
-            try {
-                const res = await fetch('/api/all');
-                const data = await res.json();
-                localStorage.setItem('kadala_cache', JSON.stringify(data));
-                render(data);
-                count = 30;
-            } catch(e) { console.log("Updating..."); }
-        }
-
-        const cached = localStorage.getItem('kadala_cache');
-        if (cached) render(JSON.parse(cached));
-        fetchAll();
-
-        let count = 30;
-        setInterval(() => { count--; if(count < 0) count = 30; document.getElementById('cd').innerText = count; }, 1000);
-        setInterval(fetchAll, 30000);
-    </script>
-</body>
-</html>
+client.login(process.env.TOKEN);
