@@ -1,15 +1,15 @@
-const { Client, GatewayIntentBits, ActivityType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const express = require('express');
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ================= PERSISTENT STORAGE =================
-const STATS_FILE = './userStats.json';     // Yapping
-const COUNT_DB_FILE = './countStats.json'; // Counting Leaderboard
-const GAME_FILE = './counting.json';       // Current Game State
-const AFK_FILE = './afk.json';             // AFK users
+// ================= DATABASE RELOAD =================
+const STATS_FILE = './userStats.json';
+const COUNT_DB_FILE = './countStats.json';
+const GAME_FILE = './counting.json';
+const AFK_FILE = './afk.json';
 
 let userStats = fs.existsSync(STATS_FILE) ? JSON.parse(fs.readFileSync(STATS_FILE)) : {};
 let countStats = fs.existsSync(COUNT_DB_FILE) ? JSON.parse(fs.readFileSync(COUNT_DB_FILE)) : {};
@@ -36,12 +36,13 @@ app.get("/api/stats", async (req, res) => {
     }));
 });
 
-app.get("/api/counting-lb", async (req, res) => {
+app.get("/api/staff", async (req, res) => {
     const guild = client.guilds.cache.first();
-    const sorted = Object.values(countStats).sort((a, b) => b.points - a.points).slice(0, 5);
-    res.json(sorted.map(s => {
+    if (!guild) return res.json([]);
+    const staff = Object.values(userStats).filter(u => u.role === "Verified Owner" || u.role === "Mod");
+    res.json(staff.map(s => {
         const m = guild.members.cache.find(mem => mem.user.username === s.username);
-        return { ...s, avatar: m ? m.user.displayAvatarURL() : 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        return { username: s.username, role: s.role, avatar: m ? m.user.displayAvatarURL() : '' };
     }));
 });
 
@@ -55,6 +56,10 @@ app.get("/api/online", async (req, res) => {
 
 app.get("/api/system", (req, res) => res.json({ ping: client.ws.ping + "ms", uptime: Math.floor(process.uptime() / 60) + "m", status: "Operational" }));
 app.get("/api/counting", (req, res) => res.json(gameData));
+app.get("/api/counting-lb", (req, res) => {
+    const sorted = Object.values(countStats).sort((a, b) => b.points - a.points).slice(0, 5);
+    res.json(sorted);
+});
 app.get("/api/afk", (req, res) => {
     const guild = client.guilds.cache.first();
     res.json(Object.keys(afkUsers).map(id => {
@@ -63,22 +68,23 @@ app.get("/api/afk", (req, res) => {
     }));
 });
 
-app.listen(PORT, () => console.log(`Unhinged Hub Live on ${PORT}`));
+app.listen(PORT, () => console.log(`Hub Running...`));
 
-// ================= BOT COMMANDS FIX =================
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMembers] });
+// ================= BOT LOGIC =================
+const client = new Client({ intents: [3276799] }); // All Intents
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     const userId = message.author.id;
     const content = message.content.toLowerCase();
 
-    // Stats Track
+    // Stats Logic
     if (!userStats[userId]) userStats[userId] = { username: message.author.username, count: 0, role: userId === message.guild.ownerId ? "Verified Owner" : "Member" };
     userStats[userId].count++;
+    userStats[userId].username = message.author.username;
     saveAll();
 
-    // --- COUNTING GAME LOGIC ---
+    // Counting Game
     if (message.channel.name.includes('count')) {
         const num = parseInt(content);
         if (!isNaN(num)) {
@@ -88,29 +94,19 @@ client.on('messageCreate', async (message) => {
                 message.react('✅'); gameData.current = num; gameData.lastUser = userId;
                 if (num > gameData.highscore) gameData.highscore = num;
                 if (!countStats[userId]) countStats[userId] = { username: message.author.username, points: 0 };
-                countStats[userId].points++; // Add to Counting LB
+                countStats[userId].points++;
             }
             saveAll();
-            return;
         }
     }
 
-    // --- COMMAND HANDLER FIX ---
-    if (content.startsWith('kadala ')) {
-        const cmd = content.replace('kadala ', '').trim();
-
-        if (cmd.startsWith('afk')) {
-            afkUsers[userId] = { time: Date.now(), reason: cmd.split('afk')[1]?.trim() || "No reason" };
-            saveAll();
-            return message.reply("AFK set pangu! Site la check pannika.");
-        }
-
-        if (cmd === 'leaderboard') {
-            return message.reply("Check the fire UI here: https://kadalabot.up.railway.app/");
-        }
+    // Command Parser
+    if (content.startsWith('kadala afk')) {
+        afkUsers[userId] = { time: Date.now(), reason: content.split('afk')[1]?.trim() || "No reason" };
+        saveAll();
+        message.reply("AFK set pangu!");
     }
-
-    if (afkUsers[userId]) { delete afkUsers[userId]; saveAll(); message.reply("Welcome back!"); }
+    if (afkUsers[userId] && !content.startsWith('kadala afk')) { delete afkUsers[userId]; saveAll(); message.reply("Back!"); }
 });
 
 client.login(process.env.TOKEN);
