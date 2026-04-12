@@ -4,229 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Verkadala Stop | ver2_a</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        
-        :root { 
-            --bg: #05080a; /* Deep Cyber Navy */
-            --surface: rgba(10, 20, 30, 0.4); 
-            --accent: #33b5e5; /* Electric Blue */
-            --border: rgba(51, 181, 229, 0.15); 
-            --text-sec: #8b949e;
-            --safe-blur: blur(10px); /* Optimized for mobile FPS */
-        }
+        :root { --bg: #020617; --glass: rgba(15, 23, 42, 0.4); --accent: #38bdf8; --border: rgba(255, 255, 255, 0.08); }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; min-height: 100vh; overflow-x: hidden; }
 
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { background: var(--bg); color:white; min-height: 100vh; overflow-x: hidden; }
+        /* Splash Screen */
+        #splash { position: fixed; inset: 0; background: #020617; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: 0.8s; text-align: center; }
+        .splash-text { letter-spacing: 5px; font-weight: 800; color: var(--accent); font-size: 0.7rem; }
 
-        /* --- SMOOTH BACKGROUND --- */
-        .blurry-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; filter: blur(90px); will-change: transform; }
-        .blob { position: absolute; width: 70vw; height: 70vw; border-radius: 50%; opacity: 0.1; background: var(--accent); animation: move 25s infinite alternate linear; }
-        @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(20%, 20%); } }
+        /* Background */
+        .blurry-bg { position: fixed; inset: 0; z-index: -1; filter: blur(80px); }
+        .blob { position: absolute; width: 80vw; height: 80vw; background: var(--accent); border-radius: 50%; opacity: 0.1; animation: move 20s infinite alternate; }
+        @keyframes move { from { transform: translate(-10%,-10%); } to { transform: translate(20%,20%); } }
 
-        /* --- SPLASH --- */
-        #splash { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.6s ease; }
-        .splash-text { letter-spacing: 4px; font-weight: 800; color: var(--accent); text-align: center; font-size: 0.75rem; line-height: 2; }
+        /* Navigation */
+        nav { width: 94%; max-width: 800px; background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--border); padding: 12px 20px; position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 100px; display: flex; justify-content: space-between; align-items: center; }
+        .join-btn { background: var(--accent); color: #020617; padding: 8px 16px; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 0.7rem; }
 
-        /* --- NAVIGATION --- */
-        nav { 
-            width: 94%; max-width: 1000px; background: var(--surface); backdrop-filter: var(--safe-blur); -webkit-backdrop-filter: var(--safe-blur);
-            border: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; 
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; border-radius: 100px;
-        }
-        .menu-btn { cursor: pointer; font-size: 1.2rem; color: var(--accent); font-weight: 800; }
-        .join-btn { background: var(--accent); color: var(--bg); padding: 7px 15px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; text-decoration: none; text-transform: uppercase; }
+        /* Content */
+        .main { padding: 100px 4% 40px; max-width: 900px; margin: 0 auto; }
+        .card { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 24px; padding: 22px; margin-bottom: 20px; }
+        .stat-val { font-size: 3.5rem; font-weight: 800; color: var(--accent); letter-spacing: -3px; }
 
-        /* --- SIDEBAR --- */
-        #sidebar {
-            position: fixed; top: 0; left: 0; width: 280px; height: 100%;
-            background: rgba(5, 8, 10, 0.98); border-right: 1px solid var(--border); z-index: 2000; 
-            padding: 80px 25px; transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #sidebar.open { transform: translateX(0); }
-        .menu-item { padding: 14px 18px; font-size: 0.9rem; color: var(--text-sec); cursor: pointer; border-radius: 12px; margin-bottom: 5px; font-weight: 600; }
-        .menu-item.active { background: rgba(51, 181, 229, 0.1); color: var(--accent); }
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1500; display: none; }
+        /* List Items */
+        .item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 18px; margin-bottom: 10px; }
+        .pfp { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid var(--accent); }
 
-        /* --- LAYOUT ENGINE --- */
-        .main-container { padding: 90px 4% 40px; width: 100%; max-width: 1200px; margin: 0 auto; }
-        .section { display: none; opacity: 0; transform: translateY(10px); transition: 0.4s ease; }
-        .section.active { display: grid; opacity: 1; transform: translateY(0); grid-template-columns: 1fr; gap: 20px; }
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { padding: 10px 20px; background: var(--glass); border: 1px solid var(--border); border-radius: 50px; color: white; cursor: pointer; white-space: nowrap; font-size: 0.8rem; }
+        .tab-btn.active { background: var(--accent); color: #020617; font-weight: 800; }
+        .section { display: none; }
+        .section.active { display: block; }
 
-        /* Grid for Desktop */
-        @media (min-width: 1100px) {
-            .section.active { grid-template-columns: 1fr 1.2fr 1fr; }
-            .full-width { grid-column: span 3; }
-            .two-thirds { grid-column: span 2; }
-        }
-
-        /* --- CARDS --- */
-        .card { 
-            background: var(--surface); backdrop-filter: var(--safe-blur); -webkit-backdrop-filter: var(--safe-blur);
-            border: 1px solid var(--border); border-radius: 24px; padding: 22px; height: fit-content;
-        }
-        .card h4 { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; font-weight: 800; }
-
-        .item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 16px; margin-bottom: 8px; border: 1px solid transparent; transition: 0.2s; }
-        .item:hover { border-color: var(--border); background: rgba(51, 181, 229, 0.05); }
-        .pfp { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--accent); flex-shrink: 0; }
-
-        .stat-val { font-size: 4rem; font-weight: 800; color: var(--accent); letter-spacing: -3px; line-height: 1; }
-
-        footer { padding: 40px; text-align: center; font-size: 0.6rem; color: var(--text-sec); letter-spacing: 2px; text-transform: uppercase; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        footer { text-align: center; padding: 20px; font-size: 0.6rem; opacity: 0.5; letter-spacing: 2px; }
     </style>
 </head>
 <body>
+    <div id="splash"><div class="splash-text">POWERED BY<br>RUWAIDCOOL SOFTWARE</div></div>
     <div class="blurry-bg"><div class="blob"></div></div>
 
-    <div id="splash">
-        <div class="splash-text">ver2_a KADALA BOT API<br>BY RUWAID</div>
-    </div>
-
-    <div id="overlay" onclick="toggleMenu()"></div>
-    <div id="sidebar">
-        <h3 style="color: var(--accent); margin-bottom: 30px; letter-spacing: 2px; font-weight: 800;">VER2_A</h3>
-        <div class="menu-item active" onclick="showSection('dash')">🏠 DASHBOARD</div>
-        <div class="menu-item" onclick="showSection('chat')">💬 AT A GLANCE</div>
-        <div class="menu-item" onclick="showSection('rankings')">🏆 RANKINGS</div>
-        <div class="menu-item" onclick="showSection('sys')">⚙️ SYSTEM</div>
-    </div>
-
     <nav>
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
-        <b style="color: var(--accent); font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">VERKADALA STOP</b>
-        <a href="https://discord.gg/7C6wX7cFDw" target="_blank" class="join-btn">Join</a>
+        <b style="color: var(--accent); font-size: 0.9rem;">VERKADALA STOP</b>
+        <a href="https://discord.com/invite/7C6wX7cFDw" target="_blank" class="join-btn">JOIN DISCORD</a>
     </nav>
 
-    <div class="main-container">
-        <div id="section-dash" class="section active">
+    <div class="main">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dash', this)">DASHBOARD</button>
+            <button class="tab-btn" onclick="switchTab('chat', this)">AT A GLANCE</button>
+            <button class="tab-btn" onclick="switchTab('rank', this)">RANKINGS</button>
+        </div>
+
+        <div id="dash" class="section active">
             <div class="card" style="text-align:center">
-                <h4>Total Kadalais</h4>
+                <p style="opacity:0.6; font-size:0.6rem; text-transform:uppercase;">Total Kadalais</p>
                 <h1 id="total-mem" class="stat-val">0</h1>
             </div>
-            
-            <div class="card two-thirds">
-                <h4>Online Kadalais (<span id="on-count">0</span>)</h4>
-                <div id="on-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
-            </div>
-
             <div class="card">
-                <h4>😴 AFK Logs</h4>
+                <h4 style="color:var(--accent); margin-bottom:15px; font-size:0.8rem;">ONLINE KADALAIS</h4>
+                <div id="on-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+            </div>
+            <div class="card">
+                <h4 style="color:#fbbf24; margin-bottom:15px; font-size:0.8rem;">😴 AFK LOGS</h4>
                 <div id="afk-list"></div>
             </div>
         </div>
 
-        <div id="section-chat" class="section">
-            <div class="card full-width">
-                <h4>Recent Server Activity</h4>
+        <div id="chat" class="section">
+            <div class="card">
+                <h4 style="color:var(--accent); margin-bottom:15px; font-size:0.8rem;">RECENT YAPPING</h4>
                 <div id="chat-feed"></div>
             </div>
         </div>
 
-        <div id="section-rankings" class="section">
-            <div class="card two-thirds">
-                <h4>🏆 Top Yapper Rankings</h4>
+        <div id="rank" class="section">
+            <div class="card">
+                <h4 style="color:var(--accent); margin-bottom:15px;">TOP YAPPER RANKINGS</h4>
                 <div id="lb-list"></div>
             </div>
             <div class="card">
-                <h4>🔢 Counting Kings</h4>
+                <h4 style="color:var(--accent); margin-bottom:15px;">🔢 COUNTING KINGS</h4>
                 <div id="count-lb"></div>
-            </div>
-        </div>
-
-        <div id="section-sys" class="section">
-            <div class="card two-thirds">
-                <h4>API Diagnostics</h4>
-                <div class="item"><div><b>WebSocket Ping</b><br><small id="ping" style="color:var(--accent)">0ms</small></div></div>
-                <div class="item"><div><b>Bot Uptime</b><br><small id="uptime" style="color:var(--accent)">0m</small></div></div>
             </div>
         </div>
     </div>
 
-    <footer>ver2_a kadala bot api by ruwaid</footer>
+    <footer>VER2_A | CRAFTED W LOVE BY RUWAIDCOOL | 2026</footer>
 
     <script>
-        // Splash Transition
-        setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 600); }, 1500);
+        // Splash logic (2s lock)
+        setTimeout(() => { 
+            const s = document.getElementById('splash');
+            s.style.opacity = '0';
+            setTimeout(() => s.style.display = 'none', 800);
+        }, 2000);
 
-        // Responsive Sidebar
-        function toggleMenu() {
-            const side = document.getElementById('sidebar');
-            const over = document.getElementById('overlay');
-            const isOpen = side.classList.contains('open');
-            if (isOpen) {
-                side.classList.remove('open');
-                over.style.display = 'none';
-            } else {
-                over.style.display = 'block';
-                setTimeout(() => side.classList.add('open'), 10);
-            }
-        }
-
-        // Section Navigation
-        function showSection(id) {
+        function switchTab(id, btn) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-            document.getElementById('section-' + id).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(window.innerWidth < 1100) toggleMenu();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
         }
 
-        // Data Rendering Engine
         function render(data) {
             if(!data) return;
-            
-            // Stats
             document.getElementById('total-mem').innerText = data.totalKadalais || 0;
-            document.getElementById('on-count').innerText = data.onlineKadalais?.count || 0;
-            document.getElementById('ping').innerText = data.system?.ping || '0ms';
-            document.getElementById('uptime').innerText = data.system?.uptime || '0m';
             
-            // Online List
             document.getElementById('on-list').innerHTML = (data.onlineKadalais?.members || []).map(m => `
-                <div style="background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:100px; border:1px solid var(--border); display:flex; align-items:center; gap:6px;">
-                    <img src="${m.avatar}" style="width:16px; height:16px; border-radius:50%">
-                    <span style="font-size:0.65rem; font-weight:600;">${m.username}</span>
-                </div>`).join('') || '<p style="font-size:0.7rem; opacity:0.5">Quiet in the sea...</p>';
-
-            // Chat Log (At a Glance)
+                <div style="background:rgba(255,255,255,0.05); padding:6px 15px; border-radius:50px; border:1px solid var(--border); font-size:0.7rem;">${m.username}</div>`).join('');
+            
             document.getElementById('chat-feed').innerHTML = (data.chat || []).map(m => `
-                <div class="item">
-                    <img src="${m.avatar}" class="pfp">
-                    <div style="flex-grow:1"><b>${m.author}</b><br><small style="color:var(--text-sec); font-size:0.75rem;">${m.content}</small></div>
-                    <span style="font-size:0.6rem; opacity:0.3;">${m.time}</span>
-                </div>`).join('') || '<p style="font-size:0.7rem; opacity:0.5; padding:20px;">No messages yapped yet.</p>';
+                <div class="item"><img src="${m.avatar}" class="pfp"><div><b>${m.author}</b><br><small>${m.content}</small></div><span style="margin-left:auto; font-size:0.6rem; opacity:0.4;">${m.time}</span></div>`).join('');
 
-            // Yappers
-            document.getElementById('lb-list').innerHTML = (data.yappers || []).map(u => `
-                <div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small style="color:var(--text-sec); font-size:0.7rem;">${u.count} messages</small></div></div>`).join('');
-            
-            // Counters
-            document.getElementById('count-lb').innerHTML = (data.counters || []).map(u => `
-                <div class="item"><img src="${u.avatar}" class="pfp"><div><b>${u.username}</b><br><small style="color:var(--text-sec); font-size:0.7rem;">${u.points} pts</small></div></div>`).join('') || 'None';
-            
-            // AFK Logs
-            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `
-                <div class="item" style="border-left:3px solid #fbbf24;"><div><b>${u.username}</b><br><small style="opacity:0.6; font-size:0.7rem;">"${u.reason}"</small></div></div>`).join('') || '<p style="opacity:0.4; font-size:0.7rem; text-align:center;">All bloods awake.</p>';
+            document.getElementById('lb-list').innerHTML = (data.yappers || []).map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><b>${u.username}</b><span style="margin-left:auto; color:var(--accent)">${u.count} msgs</span></div>`).join('');
+            document.getElementById('count-lb').innerHTML = (data.counters || []).map(u => `<div class="item"><img src="${u.avatar}" class="pfp"><b>${u.username}</b><span style="margin-left:auto; color:var(--accent)">${u.points} pts</span></div>`).join('');
+            document.getElementById('afk-list').innerHTML = (data.afk || []).map(u => `<div class="item"><b>${u.username}</b><span style="margin-left:auto; opacity:0.6; font-size:0.7rem;">"${u.reason}"</span></div>`).join('') || 'All awake.';
         }
 
         async function fetchAll() {
             try {
                 const res = await fetch('/api/all');
                 const data = await res.json();
-                if (data.totalKadalais) { localStorage.setItem('kadala_cache', JSON.stringify(data)); render(data); }
+                render(data);
             } catch(e) { console.log("Sync..."); }
         }
-
-        const cached = localStorage.getItem('kadala_cache');
-        if (cached) render(JSON.parse(cached));
-        fetchAll();
-        setInterval(fetchAll, 30000);
+        fetchAll(); setInterval(fetchAll, 30000);
     </script>
 </body>
 </html>
