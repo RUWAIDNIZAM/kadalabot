@@ -7,19 +7,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const SITE_URL = "https://kadalabot.up.railway.app/"; 
 const PROMO_CHANNEL_ID = "1477208051584073799"; 
+const BOT_VERSION = "v24.f.2026"; 
 
 // ================= STORAGE =================
 const loadJSON = (file, fallback) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : fallback;
 let userStats = loadJSON('./userStats.json', {});
-let countLB = loadJSON('./countLB.json', {});
-let gameData = loadJSON('./counting.json', { current: 0, lastUser: null });
 let afkUsers = loadJSON('./afk.json', {});
 let latestMessages = []; 
 
 const saveAll = () => {
     fs.writeFileSync('./userStats.json', JSON.stringify(userStats));
-    fs.writeFileSync('./countLB.json', JSON.stringify(countLB));
-    fs.writeFileSync('./counting.json', JSON.stringify(gameData));
     fs.writeFileSync('./afk.json', JSON.stringify(afkUsers));
 };
 
@@ -28,8 +25,7 @@ const formatTime = (ms) => {
     const mins = Math.floor(totalSeconds / 60);
     const hrs = Math.floor(mins / 60);
     if (hrs > 0) return `${hrs}h ${mins % 60}m`;
-    if (mins > 0) return `${mins}m ${totalSeconds % 60}s`;
-    return `${totalSeconds % 60}s`;
+    return `${mins}m ${totalSeconds % 60}s`;
 };
 
 // ================= MASTER CACHE =================
@@ -38,114 +34,105 @@ const updateMasterCache = async () => {
     try {
         const guild = client.guilds.cache.first();
         if (!guild) return;
+        
         const m = await guild.members.fetch({ withPresences: true });
-        const online = m.filter(mem => mem.presence?.status !== 'offline' && !mem.user.bot);
+        // Filter for all non-bot members who are NOT offline
+        const online = m.filter(mem => mem.presence?.status && mem.presence?.status !== 'offline' && !mem.user.bot);
         
         cachedResponse = { 
+            version: BOT_VERSION,
             totalKadalais: guild.memberCount,
             onlineKadalais: { 
                 count: online.size, 
-                members: online.map(mem => ({ username: mem.user.username, avatar: mem.user.displayAvatarURL() })).slice(0, 15) 
+                // REMOVED THE SLICE - SENDING EVERYONE NOW
+                members: online.map(mem => ({ 
+                    username: mem.user.username, 
+                    avatar: mem.user.displayAvatarURL({ extension: 'png', size: 128 }) 
+                }))
             },
-            yappers: Object.values(userStats).sort((a,b) => b.count - a.count).slice(0, 10),
-            counters: Object.values(countLB).sort((a,b) => b.points - a.points).slice(0, 5),
-            afk: Object.keys(afkUsers).map(id => ({ username: guild.members.cache.get(id)?.user.username || "Kadalai", reason: afkUsers[id].reason })),
+            bitchers: Object.values(userStats).sort((a,b) => b.count - a.count).slice(0, 15),
+            afk: Object.keys(afkUsers).map(id => ({ 
+                username: guild.members.cache.get(id)?.user.username || "Ghost", 
+                reason: afkUsers[id].reason 
+            })),
             chat: latestMessages,
             system: { ping: client.ws.ping + "ms", uptime: Math.floor(process.uptime() / 60) + "m" }
         };
-    } catch (e) { console.log("Sync error"); }
+    } catch (e) { console.log("Full sync failed mapla."); }
 };
 
-// ================= WEB API =================
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get("/api/all", (req, res) => res.json(cachedResponse || {}));
-app.listen(PORT, () => console.log(`Verkadala Stop API live`));
+app.get("/api/all", (req, res) => res.json(cachedResponse || { error: "Brewing..." }));
+
+app.listen(PORT, () => console.log(`Full Online Sync Live`));
 
 // ================= DISCORD BOT =================
 const client = new Client({ 
     intents: [3276799],
-    // GLOBAL FIX: Bot will never trigger a mention when replying/sending text
     allowedMentions: { parse: [], repliedUser: false } 
 });
 
 client.on('ready', () => {
-    console.log(`Kadala Watchman v24_d (Anti-Exploit) online!`);
+    console.log(`Kadala Watchman ${BOT_VERSION} ready.`);
     updateMasterCache();
     setInterval(updateMasterCache, 30000);
 });
 
-// Color Role Setup
 client.on('interactionCreate', async i => {
     if (!i.isButton()) return;
     const colors = { 'red_role': { name: 'Red', color: '#ff4d4d' }, 'blue_role': { name: 'Blue', color: '#33b5e5' }, 'green_role': { name: 'Green', color: '#2ecc71' } };
     const choice = colors[i.customId];
     if (!choice) return;
-
     await i.deferReply({ ephemeral: true });
     try {
         const role = i.guild.roles.cache.find(r => r.name === choice.name) || await i.guild.roles.create({ name: choice.name, color: choice.color });
         const names = Object.values(colors).map(c => c.name);
         await i.member.roles.remove(i.member.roles.cache.filter(r => names.includes(r.name)));
         await i.member.roles.add(role);
-        await i.editReply(`You are now **${choice.name}**! ✨`);
-    } catch (e) { await i.editReply("Role error."); }
+        await i.editReply(`Role added: **${choice.name}**`);
+    } catch (e) { await i.editReply("Permissions error."); }
 });
 
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
-    const userId = message.author.id;
-    const content = message.content;
+    
+    const sanitize = (str, limit = 80) => str.replace(/<@!?&?\d+>|@everyone|@here/g, "").replace(/@/g, "").replace(/[\n\r]/g, " ").trim().substring(0, limit);
 
-    // --- HARD SANITIZER (NUKES ALL PINGS & SYMBOLS) ---
-    const sanitize = (str, limit = 100) => {
-        return str
-            .replace(/<@!?&?\d+>|@everyone|@here/g, "") // Removes Discord mention strings
-            .replace(/@/g, "") // Removes raw @ symbols to prevent ghost-pings
-            .replace(/[\n\r]/g, " ") // Removes line breaks
-            .trim()
-            .substring(0, limit);
-    };
-
-    // Chat capture for site
     latestMessages.unshift({
         author: message.author.username,
-        content: sanitize(content, 60),
+        content: sanitize(message.content, 65),
         avatar: message.author.displayAvatarURL(),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
-    if (latestMessages.length > 10) latestMessages.pop();
+    if (latestMessages.length > 12) latestMessages.pop();
 
-    // 🏆 Stats
-    if (!userStats[userId]) userStats[userId] = { username: message.author.username, count: 0 };
-    userStats[userId].count++;
+    if (!userStats[message.author.id]) userStats[message.author.id] = { username: message.author.username, count: 0, avatar: message.author.displayAvatarURL() };
+    userStats[message.author.id].count++;
+    userStats[message.author.id].avatar = message.author.displayAvatarURL();
+    saveAll();
 
-    // 😴 AFK SYSTEM (SECURE)
+    // AFK System
     if (message.mentions.users.size > 0) {
         const firstAFK = message.mentions.users.find(u => afkUsers[u.id]);
         if (firstAFK) {
             const timeAway = formatTime(Date.now() - afkUsers[firstAFK.id].time);
-            // Uses Bold Username (Safe)
             message.reply(`Dei mamba, **${firstAFK.username}** afk pointen! Nee **${timeAway}** ah **${afkUsers[firstAFK.id].reason}** nu sollitu poiruntha.`);
         }
     }
 
-    if (content.toLowerCase().startsWith('kadala afk')) {
-        const rawReason = content.split(/afk/i)[1]?.trim() || "No reason";
-        const cleanReason = sanitize(rawReason, 50); // Mentions stripped here!
-        
-        afkUsers[userId] = { time: Date.now(), reason: cleanReason };
+    if (message.content.toLowerCase().startsWith('kadala afk')) {
+        const r = sanitize(message.content.split(/afk/i)[1]?.trim() || "Chilling", 50);
+        afkUsers[message.author.id] = { time: Date.now(), reason: r };
         saveAll();
-        return message.channel.send(`afk pointen: ${cleanReason}`);
+        return message.channel.send(`afk pointen: ${r}`);
     }
 
-    if (afkUsers[userId] && !content.toLowerCase().startsWith('kadala afk')) {
-        const dur = formatTime(Date.now() - afkUsers[userId].time);
-        delete afkUsers[userId]; saveAll();
-        message.reply(`Welcome back mamba! Nee **${dur}** ah AFK-la iruntha.`);
+    if (afkUsers[message.author.id] && !message.content.toLowerCase().startsWith('kadala afk')) {
+        delete afkUsers[message.author.id]; saveAll();
+        message.reply("Welcome back!");
     }
 
-    // 🎨 Admin Role Setup
-    if (content.toLowerCase() === 'kadala setup color' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    if (message.content.toLowerCase() === 'kadala setup color' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('red_role').setLabel('Red 🔥').setStyle(ButtonStyle.Danger),
             new ButtonBuilder().setCustomId('blue_role').setLabel('Blue 🌊').setStyle(ButtonStyle.Primary),
@@ -153,8 +140,6 @@ client.on('messageCreate', async message => {
         );
         message.channel.send({ content: "🎨 **KADALA COLOR PANEL**", components: [row] });
     }
-
-    updateMasterCache();
 });
 
 client.login(process.env.TOKEN);
