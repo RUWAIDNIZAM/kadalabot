@@ -27,7 +27,7 @@
 
         .ambient-glow { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.12), transparent 75%); }
 
-        /* --- FLOATING BOTTOM NAV (MOBILE FIX) --- */
+        /* --- FLOATING BOTTOM NAV --- */
         nav { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 94%; max-width: 550px; height: 70px;
@@ -47,19 +47,19 @@
         .nav-link.active::after { content: ''; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; margin-top: 4px; }
 
         /* --- CONTAINER --- */
-        .container { padding: 40px 5% 120px; max-width: 1400px; margin: 0 auto; }
+        .container { padding: 40px 6% 120px; max-width: 1400px; margin: 0 auto; }
         .page { display: none; opacity: 0; }
         .page.active { display: block; animation: pageIn 0.5s ease forwards; }
         @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CARDS & STATS --- */
-        .m3-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 35px 25px; margin-bottom: 20px; overflow: hidden; }
-        .card-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 3px; margin-bottom: 20px; display: block; }
+        /* --- UI COMPONENTS --- */
         .hero-title { font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; line-height: 0.9; letter-spacing: -2px; margin-bottom: 20px; }
         .hero-title span { color: var(--accent); }
+        .m3-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 35px 25px; margin-bottom: 20px; overflow: hidden; }
+        .card-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 3px; margin-bottom: 20px; display: block; }
         .huge-stat { font-size: 4rem; font-weight: 900; letter-spacing: -4px; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
 
-        /* --- THE ONLINE CIRCLE (Physics Engine) --- */
+        /* --- ONLINE CIRCLE PHYSICS --- */
         #circle-container {
             width: 100%; height: 500px; position: relative;
             background: rgba(255,255,255,0.02); border-radius: 40px;
@@ -91,12 +91,6 @@
         .rule-item b { color: var(--accent); font-size: 0.85rem; display: block; margin-bottom: 4px; }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.65rem; color: #444; letter-spacing: 4px; font-weight: 700; text-transform: uppercase; }
-
-        @media (max-width: 600px) {
-            .hero-title { font-size: 2.8rem; }
-            .huge-stat { font-size: 3rem; }
-            .btn { width: 100%; }
-        }
     </style>
 </head>
 <body>
@@ -112,8 +106,8 @@
 
     <div class="container">
         <div id="page-home" class="page active">
-            <h1 class="hero-title">Absolute <span>Freedom.</span><br>Tamil Hub.</h1>
-            <p style="color:var(--text-dim); margin-bottom:35px; font-size:1.1rem;">The central hub for the bloods. Connect, bitch, and gossip together respectfully. No censorship, just Kadalai.</p>
+            <h1 class="hero-title">Absolute <span>Freedom.</span><br>Tamil Community.</h1>
+            <p style="color:var(--text-dim); margin-bottom:35px; font-size:1.1rem;">Verkadala Hub is intended to feel like a central hub for the Tamil community — connect and bitch respectfully.</p>
 
             <div class="btn-flex">
                 <a href="https://discord.com/invite/7C6wX7cFDw" target="_blank" class="btn btn-main">JOIN NOW</a>
@@ -132,35 +126,32 @@
             </div>
         </div>
 
+        <div id="page-stats" class="page">
+            <div class="m3-card">
+                <span class="card-label">🟢 Interactive Online Circle</span>
+                <p style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 15px;">Flick members around. Grab and toss to interact with bloods.</p>
+                <div id="circle-container"></div>
+            </div>
+            <div class="m3-card">
+                <span class="card-label">🏆 Top Bitchers</span>
+                <div id="yapper-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;"></div>
+            </div>
+        </div>
+
         <div id="page-rules" class="page">
             <h1 class="hero-title" style="font-size: 3rem;">The <span>Code.</span></h1>
             <div class="m3-card">
-                <span class="card-label">Server Rules</span>
-                <div class="rule-item"><b>Respect</b><p>No hate, harassment, or discrimination.</p></div>
-                <div class="rule-item"><b>NSFW/Gore</b><p>Strictly banned (CSAM = instant ban).</p></div>
-                <div class="rule-item"><b>DMs</b><p>Don’t DM without permission.</p></div>
-                <div class="rule-item"><b>Moderation</b><p>Discord ToS applies at all times.</p></div>
+                <div class="rule-item"><b>Respect</b><p>No hate or harassment.</p></div>
+                <div class="rule-item"><b>NSFW</b><p>Strictly banned.</p></div>
+                <div class="rule-item"><b>Liability</b><p>Supporting rule-breaking = you are responsible.</p></div>
             </div>
         </div>
 
         <div id="page-bot" class="page">
             <h1 class="hero-title" style="font-size: 3rem;">The <span>Bot.</span></h1>
             <div class="m3-card">
-                <span class="card-label">Utility</span>
-                <div class="rule-item"><b>kadala afk</b><p>Enter ghost mode bitching silently.</p></div>
-                <div class="rule-item"><b>Gossip Sync</b><p>Real-time mirroring enabled for stats.</p></div>
-            </div>
-        </div>
-
-        <div id="page-stats" class="page">
-            <div class="m3-card">
-                <span class="card-label">🟢 Interactive Online Circle</span>
-                <p style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 15px;">Bubbles randomly move and bounce. Grab and toss to interact.</p>
-                <div id="circle-container"></div>
-            </div>
-            <div class="m3-card">
-                <span class="card-label">🏆 Top Bitchers</span>
-                <div id="yapper-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;"></div>
+                <div class="rule-item"><b>kadala afk</b><p>Silent mode enabled.</p></div>
+                <div class="rule-item"><b>Gossip Sync</b><p>Live mirroring to site stats.</p></div>
             </div>
         </div>
 
@@ -177,7 +168,7 @@
     <footer>POWERED BY RUWAIDCOOL SOFTWARE | 2026</footer>
 
     <script>
-        // --- APPLE REPLAY STYLE STATS ---
+        // Apple Replay Number Animation
         function animateValue(obj, start, end, duration) {
             let startTimestamp = null;
             const step = (timestamp) => {
@@ -189,62 +180,55 @@
             window.requestAnimationFrame(step);
         }
 
-        let lastT = 0, lastO = 0;
-        let bubbles = [];
-        let physicsActive = false;
-        let draggedBubble = null;
-        let mouse = { x: 0, y: 0 };
+        let lastT = 0, lastO = 0, bubbles = [], physicsActive = false, draggedBubble = null, mouse = { x: 0, y: 0 };
         const container = document.getElementById('circle-container');
 
-        // Physics + Collision Solver
+        // Physics Engine with Collision Solver
         function updatePhysics() {
             if(!physicsActive) return;
-            const w = container.clientWidth || window.innerWidth * 0.9;
-            const h = container.clientHeight || 500;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
 
             bubbles.forEach(b => {
                 if (b === draggedBubble) {
                     b.vx = (mouse.x - b.r - b.x) * 0.3;
                     b.vy = (mouse.y - b.r - b.y) * 0.3;
                 } else {
-                    b.vx *= 0.99; b.vy *= 0.99; // Air friction
-                    b.vx += (Math.random() - 0.5) * 0.08; // Brownian drift
+                    b.vx *= 0.99; b.vy *= 0.99;
+                    b.vx += (Math.random() - 0.5) * 0.08;
                 }
-
                 b.x += b.vx; b.y += b.vy;
 
-                // Wall Bounds
+                // Wall Collisions
                 if (b.x <= 0) { b.x = 0; b.vx *= -0.7; }
                 if (b.x + b.r*2 >= w) { b.x = w - b.r*2; b.vx *= -0.7; }
                 if (b.y <= 0) { b.y = 0; b.vy *= -0.7; }
                 if (b.y + b.r*2 >= h) { b.y = h - b.r*2; b.vy *= -0.7; }
 
-                // CIRCLE-TO-CIRCLE COLLISION (Spreader)
+                // Circle-to-Circle Collision (Anti-Clump)
                 bubbles.forEach(b2 => {
                     if (b === b2) return;
                     const dx = (b.x + b.r) - (b2.x + b2.r);
                     const dy = (b.y + b.r) - (b2.y + b2.r);
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = b.r + b2.r;
-                    
-                    if (distance < minDistance) {
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const minDist = b.r + b2.r;
+                    if (dist < minDist) {
                         const angle = Math.atan2(dy, dx);
-                        const overlap = minDistance - distance;
-                        const force = overlap * 0.05; // Gentle push
-                        b.vx += Math.cos(angle) * force;
-                        b.vy += Math.sin(angle) * force;
+                        const push = (minDist - dist) * 0.1;
+                        b.vx += Math.cos(angle) * push;
+                        b.vy += Math.sin(angle) * push;
                     }
                 });
-
                 b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
             });
             requestAnimationFrame(updatePhysics);
         }
 
         function createBubbles(members) {
-            const w = container.clientWidth || window.innerWidth * 0.9;
-            const h = container.clientHeight || 500;
-            
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if(w === 0) return;
+
             container.innerHTML = ''; bubbles = [];
             members.forEach(m => {
                 const size = Math.floor(Math.random() * 50) + 70; // 70px to 120px
@@ -259,11 +243,10 @@
 
                 const bObj = { 
                     el: div, 
-                    // Spawn at center to avoid (0,0) clumping
-                    x: w/2 - size/2 + (Math.random() - 0.5) * 50, 
-                    y: h/2 - size/2 + (Math.random() - 0.5) * 50, 
-                    vx: (Math.random() - 0.5) * 15, // Explosive start
-                    vy: (Math.random() - 0.5) * 15, 
+                    x: Math.random() * (w - size), 
+                    y: Math.random() * (h - size), 
+                    vx: (Math.random() - 0.5) * 20, 
+                    vy: (Math.random() - 0.5) * 20, 
                     r: size / 2 
                 };
 
@@ -283,12 +266,10 @@
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
             el.classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
+            
             if(id === 'stats') {
                 physicsActive = true;
-                // Force wait for DOM to paint before spawning bubbles
-                setTimeout(() => { if(cachedData) createBubbles(cachedData.onlineKadalais.members); }, 150);
+                setTimeout(() => { if(cachedData) createBubbles(cachedData.onlineKadalais.members); }, 200);
             } else { physicsActive = false; }
         }
 
@@ -312,7 +293,7 @@
                 const res = await fetch('/api/all');
                 const data = await res.json();
                 render(data);
-            } catch(e) { console.log("Sync error..."); }
+            } catch(e) { console.log("Updating..."); }
         }
 
         fetchAll(); setInterval(fetchAll, 30000);
