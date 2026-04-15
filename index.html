@@ -22,12 +22,11 @@
             background: var(--bg); color: var(--text-main); 
             min-height: 100vh; overflow-x: hidden;
             line-height: 1.5; letter-spacing: 0.5px;
-            user-select: none; touch-action: manipulation;
+            user-select: none; touch-action: none;
         }
 
         .ambient-glow { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.12), transparent 75%); }
 
-        /* --- FLOATING BOTTOM NAV --- */
         nav { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 94%; max-width: 550px; height: 70px;
@@ -37,29 +36,21 @@
             z-index: 1000; padding: 0 5px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
-        .nav-link { 
-            flex: 1; text-align: center; color: var(--text-dim);
-            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1px; cursor: pointer; transition: 0.3s;
-            display: flex; flex-direction: column; align-items: center;
-        }
+        .nav-link { flex: 1; text-align: center; color: var(--text-dim); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
         .nav-link.active { color: var(--accent); }
         .nav-link.active::after { content: ''; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; margin-top: 4px; }
 
-        /* --- CONTAINER --- */
         .container { padding: 40px 6% 120px; max-width: 1400px; margin: 0 auto; }
         .page { display: none; opacity: 0; }
         .page.active { display: block; animation: pageIn 0.5s ease forwards; }
         @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- UI COMPONENTS --- */
-        .hero-title { font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; line-height: 0.9; letter-spacing: -2px; margin-bottom: 20px; }
-        .hero-title span { color: var(--accent); }
         .m3-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 35px 25px; margin-bottom: 20px; overflow: hidden; }
         .card-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 3px; margin-bottom: 20px; display: block; }
+        .hero-title { font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 900; line-height: 0.9; letter-spacing: -2px; margin-bottom: 20px; }
         .huge-stat { font-size: 4rem; font-weight: 900; letter-spacing: -4px; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
 
-        /* --- ONLINE CIRCLE PHYSICS --- */
+        /* --- BUBBLE CONTAINER --- */
         #circle-container {
             width: 100%; height: 500px; position: relative;
             background: rgba(255,255,255,0.02); border-radius: 40px;
@@ -73,8 +64,8 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             will-change: transform; cursor: grab;
             display: flex; align-items: center; justify-content: center;
+            left: 0; top: 0; /* Resetting CSS defaults */
         }
-        .bubble-pfp:active { cursor: grabbing; border-color: #fff; z-index: 100; scale: 1.1; }
         .bubble-name { 
             position: absolute; bottom: -24px; font-size: 0.55rem; 
             font-weight: 800; color: #fff; white-space: nowrap;
@@ -86,9 +77,6 @@
         .btn { padding: 18px 35px; border-radius: 100px; text-decoration: none; font-weight: 800; font-size: 0.9rem; text-align: center; flex: 1; min-width: 150px; transition: 0.3s; }
         .btn-main { background: var(--accent); color: #000; }
         .btn-ghost { background: transparent; color: #fff; border: 1px solid #333; }
-
-        .rule-item { padding: 15px; background: rgba(255,255,255,0.03); border-radius: 20px; margin-bottom: 10px; border-left: 3px solid var(--accent); }
-        .rule-item b { color: var(--accent); font-size: 0.85rem; display: block; margin-bottom: 4px; }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.65rem; color: #444; letter-spacing: 4px; font-weight: 700; text-transform: uppercase; }
     </style>
@@ -107,29 +95,20 @@
     <div class="container">
         <div id="page-home" class="page active">
             <h1 class="hero-title">Absolute <span>Freedom.</span><br>Tamil Community.</h1>
-            <p style="color:var(--text-dim); margin-bottom:35px; font-size:1.1rem;">Verkadala Hub is intended to feel like a central hub for the Tamil community — connect and bitch respectfully.</p>
-
+            <p style="color:var(--text-dim); margin-bottom:35px; font-size:1.1rem;">Verkadala Hub — connect, bitch, and gossip respectfully.</p>
             <div class="btn-flex">
                 <a href="https://discord.com/invite/7C6wX7cFDw" target="_blank" class="btn btn-main">JOIN NOW</a>
                 <a href="https://github.com/RUWAIDNIZAM/kadalabot" target="_blank" class="btn btn-ghost">GITHUB REPO</a>
             </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                <div class="m3-card" style="margin-bottom:0; text-align: center;">
-                    <span class="card-label" style="margin-bottom:5px;">Kadalais</span>
-                    <h1 class="huge-stat" id="h-total">0</h1>
-                </div>
-                <div class="m3-card" style="margin-bottom:0; text-align: center;">
-                    <span class="card-label" style="margin-bottom:5px;">Gossiping</span>
-                    <h1 class="huge-stat" id="h-on" style="color:var(--accent);">0</h1>
-                </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="m3-card" style="text-align: center;"><span class="card-label">Kadalais</span><h1 class="huge-stat" id="h-total">0</h1></div>
+                <div class="m3-card" style="text-align: center;"><span class="card-label">Gossiping</span><h1 class="huge-stat" id="h-on" style="color:var(--accent);">0</h1></div>
             </div>
         </div>
 
         <div id="page-stats" class="page">
             <div class="m3-card">
                 <span class="card-label">🟢 Interactive Online Circle</span>
-                <p style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 15px;">Flick members around. Grab and toss to interact with bloods.</p>
                 <div id="circle-container"></div>
             </div>
             <div class="m3-card">
@@ -138,37 +117,15 @@
             </div>
         </div>
 
-        <div id="page-rules" class="page">
-            <h1 class="hero-title" style="font-size: 3rem;">The <span>Code.</span></h1>
-            <div class="m3-card">
-                <div class="rule-item"><b>Respect</b><p>No hate or harassment.</p></div>
-                <div class="rule-item"><b>NSFW</b><p>Strictly banned.</p></div>
-                <div class="rule-item"><b>Liability</b><p>Supporting rule-breaking = you are responsible.</p></div>
-            </div>
-        </div>
-
-        <div id="page-bot" class="page">
-            <h1 class="hero-title" style="font-size: 3rem;">The <span>Bot.</span></h1>
-            <div class="m3-card">
-                <div class="rule-item"><b>kadala afk</b><p>Silent mode enabled.</p></div>
-                <div class="rule-item"><b>Gossip Sync</b><p>Live mirroring to site stats.</p></div>
-            </div>
-        </div>
-
-        <div id="page-credits" class="page">
-            <div class="m3-card" style="text-align: center;">
-                <span class="card-label">Powered by Ruwaidcool Software</span>
-                <h1 class="hero-title" style="font-size: 3.5rem;">ruwaidcool.</h1>
-                <p style="margin-bottom: 30px; color: var(--text-dim);">Engineered for the Tamil community 2026.</p>
-                <a href="https://github.com/RUWAIDNIZAM/kadalabot" target="_blank" class="btn btn-ghost" style="width: auto; flex: none;">GITHUB REPO ↗</a>
-            </div>
-        </div>
+        <div id="page-rules" class="page"><div class="m3-card"><span class="card-label">Rules</span><p>Respect others.</p></div></div>
+        <div id="page-bot" class="page"><div class="m3-card"><span class="card-label">Bot</span><p>kadala afk mode.</p></div></div>
+        <div id="page-credits" class="page"><div class="m3-card" style="text-align:center;"><h1>ruwaidcool.</h1></div></div>
     </div>
 
     <footer>POWERED BY RUWAIDCOOL SOFTWARE | 2026</footer>
 
     <script>
-        // Apple Replay Number Animation
+        // Apple-style roll numbers
         function animateValue(obj, start, end, duration) {
             let startTimestamp = null;
             const step = (timestamp) => {
@@ -183,29 +140,37 @@
         let lastT = 0, lastO = 0, bubbles = [], physicsActive = false, draggedBubble = null, mouse = { x: 0, y: 0 };
         const container = document.getElementById('circle-container');
 
-        // Physics Engine with Collision Solver
         function updatePhysics() {
             if(!physicsActive) return;
-            const w = container.clientWidth;
-            const h = container.clientHeight;
+            // HARD FALLBACK: If container width is 0, use window width minus padding
+            const w = container.clientWidth || (window.innerWidth * 0.85);
+            const h = container.clientHeight || 500;
 
             bubbles.forEach(b => {
+                // If bubble is somehow glitched at 0,0, shove it to center
+                if(b.x === 0 && b.y === 0) {
+                    b.x = w/2; b.y = h/2;
+                    b.vx = (Math.random() - 0.5) * 10;
+                    b.vy = (Math.random() - 0.5) * 10;
+                }
+
                 if (b === draggedBubble) {
                     b.vx = (mouse.x - b.r - b.x) * 0.3;
                     b.vy = (mouse.y - b.r - b.y) * 0.3;
                 } else {
                     b.vx *= 0.99; b.vy *= 0.99;
-                    b.vx += (Math.random() - 0.5) * 0.08;
+                    b.vx += (Math.random() - 0.5) * 0.1;
                 }
+
                 b.x += b.vx; b.y += b.vy;
 
-                // Wall Collisions
-                if (b.x <= 0) { b.x = 0; b.vx *= -0.7; }
-                if (b.x + b.r*2 >= w) { b.x = w - b.r*2; b.vx *= -0.7; }
-                if (b.y <= 0) { b.y = 0; b.vy *= -0.7; }
-                if (b.y + b.r*2 >= h) { b.y = h - b.r*2; b.vy *= -0.7; }
+                // Bounce off walls
+                if (b.x <= 0) { b.x = 0; b.vx *= -0.8; }
+                if (b.x + b.r*2 >= w) { b.x = w - b.r*2; b.vx *= -0.8; }
+                if (b.y <= 0) { b.y = 0; b.vy *= -0.8; }
+                if (b.y + b.r*2 >= h) { b.y = h - b.r*2; b.vy *= -0.8; }
 
-                // Circle-to-Circle Collision (Anti-Clump)
+                // Bubble-to-Bubble Collision
                 bubbles.forEach(b2 => {
                     if (b === b2) return;
                     const dx = (b.x + b.r) - (b2.x + b2.r);
@@ -214,24 +179,25 @@
                     const minDist = b.r + b2.r;
                     if (dist < minDist) {
                         const angle = Math.atan2(dy, dx);
-                        const push = (minDist - dist) * 0.1;
+                        const push = (minDist - dist) * 0.15; // Stronger push
                         b.vx += Math.cos(angle) * push;
                         b.vy += Math.sin(angle) * push;
                     }
                 });
+
                 b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
             });
             requestAnimationFrame(updatePhysics);
         }
 
         function createBubbles(members) {
-            const w = container.clientWidth;
-            const h = container.clientHeight;
-            if(w === 0) return;
-
+            // Using window as a fallback to ensure we NEVER spawn at 0 range
+            const w = container.clientWidth || (window.innerWidth * 0.85);
+            const h = container.clientHeight || 500;
+            
             container.innerHTML = ''; bubbles = [];
             members.forEach(m => {
-                const size = Math.floor(Math.random() * 50) + 70; // 70px to 120px
+                const size = Math.floor(Math.random() * 40) + 75; // 75px to 115px
                 const div = document.createElement('div');
                 div.className = 'bubble-pfp';
                 div.style.width = size + 'px'; div.style.height = size + 'px';
@@ -243,10 +209,11 @@
 
                 const bObj = { 
                     el: div, 
+                    // Random spawn covering the whole calculated area
                     x: Math.random() * (w - size), 
                     y: Math.random() * (h - size), 
-                    vx: (Math.random() - 0.5) * 20, 
-                    vy: (Math.random() - 0.5) * 20, 
+                    vx: (Math.random() - 0.5) * 15, // Immediate movement
+                    vy: (Math.random() - 0.5) * 15, 
                     r: size / 2 
                 };
 
@@ -266,10 +233,12 @@
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + id).classList.add('active');
             el.classList.add('active');
-            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             if(id === 'stats') {
                 physicsActive = true;
-                setTimeout(() => { if(cachedData) createBubbles(cachedData.onlineKadalais.members); }, 200);
+                // Wait slightly for CSS transition then spawn
+                setTimeout(() => { if(cachedData) createBubbles(cachedData.onlineKadalais.members); }, 250);
             } else { physicsActive = false; }
         }
 
@@ -281,7 +250,7 @@
             lastT = data.totalKadalais; lastO = data.onlineKadalais?.count;
 
             document.getElementById('yapper-list').innerHTML = (data.bitchers || []).map(u => `
-                <div class="rule-item" style="border:none; background:rgba(255,255,255,0.05); display:flex; align-items:center; gap:10px;">
+                <div class="rule-item" style="border:none; background:rgba(255,255,255,0.05); display:flex; align-items:center; gap:10px; border-radius:24px;">
                     <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--accent);">
                     <div style="flex:1;"><b>${u.username}</b></div>
                     <span style="font-weight:900; color:var(--accent); font-size:1.3rem;">${u.count}</span>
@@ -293,7 +262,7 @@
                 const res = await fetch('/api/all');
                 const data = await res.json();
                 render(data);
-            } catch(e) { console.log("Updating..."); }
+            } catch(e) { console.log("Sync error..."); }
         }
 
         fetchAll(); setInterval(fetchAll, 30000);
