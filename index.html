@@ -28,7 +28,7 @@
 
         .ambient-glow { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% -20%, rgba(56, 189, 248, 0.12), transparent 75%); }
 
-        /* --- FLOATING BOTTOM NAV (Mobile Gold Standard) --- */
+        /* --- NAVIGATION DOCK --- */
         nav { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 94%; max-width: 500px; height: 70px;
@@ -47,8 +47,8 @@
         .nav-link.active { color: var(--accent); }
         .nav-link.active::after { content: ''; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; margin-top: 4px; }
 
-        /* --- CONTAINER --- */
-        .container { padding: 40px 6% 140px; max-width: 1400px; margin: 0 auto; }
+        /* --- MAIN CONTAINER --- */
+        .container { padding: 40px 5% 140px; max-width: 1400px; margin: 0 auto; }
         .page { display: none; opacity: 0; }
         .page.active { display: block; animation: pageIn 0.4s ease forwards; }
         @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -62,24 +62,20 @@
         
         .huge-stat { font-size: 4.5rem; font-weight: 900; letter-spacing: -4px; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
 
-        /* --- EVENT TAB --- */
+        /* --- EVENT CARD --- */
         .event-card { background: linear-gradient(145deg, #1a1a1a, #000); border: 1px solid var(--accent); }
         .event-badge { background: var(--accent); color: #000; padding: 4px 12px; border-radius: 50px; font-size: 0.65rem; font-weight: 900; margin-bottom: 10px; display: inline-block; }
 
-        /* --- ONLINE MEMBERS LIST (CLEAN) --- */
-        .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .member-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 24px; text-align: center; transition: 0.3s; }
-        .member-item:hover { background: rgba(56, 189, 248, 0.05); border-color: var(--accent); }
-        .pfp-main { width: 55px; height: 55px; border-radius: 50%; border: 2.5px solid var(--accent); margin-bottom: 10px; object-fit: cover; }
-        .u-name { font-size: 0.8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        /* --- MEMBER GRID --- */
+        .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+        .member-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 24px; text-align: center; }
+        .pfp-main { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 8px; object-fit: cover; }
+        .u-name { font-size: 0.75rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 
         .btn-flex { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
         .btn { padding: 18px 35px; border-radius: 100px; text-decoration: none; font-weight: 800; font-size: 0.9rem; text-align: center; flex: 1; min-width: 150px; transition: 0.3s; }
         .btn-main { background: var(--accent); color: #000; }
         .btn-ghost { background: transparent; color: #fff; border: 1px solid #333; }
-
-        .rule-item { padding: 15px; background: rgba(255,255,255,0.03); border-radius: 20px; margin-bottom: 10px; border-left: 3px solid var(--accent); }
-        .rule-item b { color: var(--accent); font-size: 0.85rem; display: block; margin-bottom: 4px; }
 
         footer { text-align: center; padding: 40px 20px; font-size: 0.65rem; color: #444; letter-spacing: 4px; font-weight: 700; text-transform: uppercase; }
 
@@ -113,14 +109,13 @@
                     <p>💰 <b>Cash Prize:</b> ₹300</p>
                     <p>🎤 <b>Rule:</b> ANY song, ANY language</p>
                     <p>🎟️ <b>Entry:</b> NO entry fees</p>
-                    <p>📅 <b>Deadline:</b> 26th April</p>
+                    <p>📅 <b>End Date:</b> 26th April</p>
                 </div>
-                <p style="margin-top: 15px; font-size: 0.85rem; opacity: 0.7;">This is your chance to flex your voice and win real cash. Just pure talent.</p>
+                <p style="margin-top: 15px; font-size: 0.85rem; opacity: 0.7;">flex your voice and win real cash. Just pure talent.</p>
             </div>
 
             <div class="btn-flex">
-                <a href="https://discord.com/invite/7C6wX7cFDw" target="_blank" class="btn btn-main">JOIN NOW</a>
-                <a href="https://github.com/RUWAIDNIZAM/kadalabot" target="_blank" class="btn btn-ghost">GITHUB REPO</a>
+                <a href="https://discord.com/invite/7C6wX7cFDw" target="_blank" class="btn btn-main">JOIN THE BLOODS</a>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
@@ -128,18 +123,18 @@
                     <span class="card-label" style="margin-bottom:5px;">Kadalais</span>
                     <h1 class="huge-stat" id="h-total">0</h1>
                 </div>
-                <div class="m3-card" style="margin-bottom:0; text-align: center;">
-                    <span class="card-label" style="margin-bottom:5px;">Gossiping</span>
-                    <h1 class="huge-stat" id="h-on" style="color:var(--accent);">0</h1>
+                <div class="m3-card" style="margin-bottom:0; text-align: center; border-color: rgba(255,255,255,0.05);">
+                    <span class="card-label" style="margin-bottom:10px;">Establishment</span>
+                    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--accent);">FEB 2026</h2>
+                    <p style="font-size: 0.75rem; font-weight: 600; opacity: 0.6; margin-top: 5px;">Hit 200 members in 2 weeks.</p>
                 </div>
             </div>
         </div>
 
         <div id="page-stats" class="page">
             <div class="m3-card">
-                <span class="card-label">🟢 Online Kadalais</span>
-                <div id="online-grid" class="member-grid">
-                    </div>
+                <span class="card-label">🟢 Online Members</span>
+                <div id="online-grid" class="member-grid"></div>
             </div>
             <div class="m3-card">
                 <span class="card-label">🏆 Top Bitchers</span>
@@ -147,31 +142,9 @@
             </div>
         </div>
 
-        <div id="page-rules" class="page">
-            <h1 class="hero-title" style="font-size: 3rem;">The <span>Code.</span></h1>
-            <div class="m3-card">
-                <div class="rule-item"><b>Respect</b><p>No hate or harassment.</p></div>
-                <div class="rule-item"><b>NSFW</b><p>Strictly banned (Instant Ban).</p></div>
-                <div class="rule-item"><b>Moderation</b><p>Discord ToS applies at all times.</p></div>
-            </div>
-        </div>
-
-        <div id="page-bot" class="page">
-            <h1 class="hero-title" style="font-size: 3rem;">The <span>Bot.</span></h1>
-            <div class="m3-card">
-                <div class="rule-item"><b>kadala afk</b><p>Ghost mode bitching enabled.</p></div>
-                <div class="rule-item"><b>Gossip Sync</b><p>Live stats mirroring active.</p></div>
-            </div>
-        </div>
-
-        <div id="page-credits" class="page">
-            <div class="m3-card" style="text-align: center;">
-                <span class="card-label">Developer</span>
-                <h1 class="hero-title" style="font-size: 3.5rem;">ruwaidcool.</h1>
-                <p style="margin-bottom: 30px; color: var(--text-dim);">Powered by Ruwaidcool Software | 2026.</p>
-                <a href="https://github.com/RUWAIDNIZAM/kadalabot" target="_blank" class="btn btn-ghost" style="width: auto; flex: none;">GITHUB ↗</a>
-            </div>
-        </div>
+        <div id="page-rules" class="page"><div class="m3-card"><span class="card-label">Rules</span><p>Respect others and Discord ToS.</p></div></div>
+        <div id="page-bot" class="page"><div class="m3-card"><span class="card-label">Bot</span><p>Utility like kadala afk.</p></div></div>
+        <div id="page-credits" class="page"><div class="m3-card" style="text-align: center;"><span class="card-label">Powered by</span><h1>ruwaidcool software</h1></div></div>
     </div>
 
     <footer>POWERED BY RUWAIDCOOL SOFTWARE | 2026</footer>
@@ -188,7 +161,7 @@
             window.requestAnimationFrame(step);
         }
 
-        let lastT = 0, lastO = 0;
+        let lastT = 0;
 
         function showPage(id, el) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -200,12 +173,11 @@
 
         function render(data) {
             if(!data) return;
-            // Apple Replay Animated Numbers
+            // Apple Replay Animated Total Members
             animateValue(document.getElementById('h-total'), lastT, data.totalKadalais || 0, 1500);
-            animateValue(document.getElementById('h-on'), lastO, data.onlineKadalais?.count || 0, 1500);
-            lastT = data.totalKadalais; lastO = data.onlineKadalais?.count;
+            lastT = data.totalKadalais;
 
-            // Online Grid (Replaced Bubble Circle)
+            // Online Grid (No count, just actual members)
             document.getElementById('online-grid').innerHTML = (data.onlineKadalais?.members || []).map(m => `
                 <div class="member-item">
                     <img src="${m.avatar}" class="pfp-main">
@@ -214,10 +186,10 @@
 
             // Bitcher Rankings
             document.getElementById('yapper-list').innerHTML = (data.bitchers || []).map(u => `
-                <div class="rule-item" style="border:none; background:rgba(255,255,255,0.05); display:flex; align-items:center; gap:10px;">
-                    <img src="${u.avatar}" style="width:40px; height:40px; border-radius:50%; border:1px solid var(--accent);">
-                    <div style="flex:1;"><b>${u.username}</b></div>
-                    <span style="font-weight:900; color:var(--accent); font-size:1.3rem;">${u.count}</span>
+                <div class="member-item" style="display:flex; align-items:center; gap:15px; text-align:left; width:100%; margin-bottom:10px;">
+                    <img src="${u.avatar}" class="pfp-main" style="margin:0;">
+                    <div style="flex:1;"><b class="u-name">${u.username}</b></div>
+                    <span style="font-weight:900; color:var(--accent);">${u.count}</span>
                 </div>`).join('');
         }
 
