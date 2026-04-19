@@ -36,7 +36,6 @@ const updateMasterCache = async () => {
         if (!guild) return;
         
         const m = await guild.members.fetch({ withPresences: true });
-        // Filter for all non-bot members who are NOT offline
         const online = m.filter(mem => mem.presence?.status && mem.presence?.status !== 'offline' && !mem.user.bot);
         
         cachedResponse = { 
@@ -44,7 +43,6 @@ const updateMasterCache = async () => {
             totalKadalais: guild.memberCount,
             onlineKadalais: { 
                 count: online.size, 
-                // REMOVED THE SLICE - SENDING EVERYONE NOW
                 members: online.map(mem => ({ 
                     username: mem.user.username, 
                     avatar: mem.user.displayAvatarURL({ extension: 'png', size: 128 }) 
@@ -78,19 +76,37 @@ client.on('ready', () => {
     setInterval(updateMasterCache, 30000);
 });
 
+// Color Role Setup - ADDED MISSING COLORS
 client.on('interactionCreate', async i => {
     if (!i.isButton()) return;
-    const colors = { 'red_role': { name: 'Red', color: '#ff4d4d' }, 'blue_role': { name: 'Blue', color: '#33b5e5' }, 'green_role': { name: 'Green', color: '#2ecc71' } };
+    
+    const colors = { 
+        'red_role': { name: 'Red', color: '#ff4d4d' }, 
+        'blue_role': { name: 'Blue', color: '#33b5e5' }, 
+        'green_role': { name: 'Green', color: '#2ecc71' },
+        'yellow_role': { name: 'Yellow', color: '#f1c40f' },
+        'purple_role': { name: 'Purple', color: '#9b59b6' },
+        'pink_role': { name: 'Pink', color: '#e91e63' }
+    };
+
     const choice = colors[i.customId];
     if (!choice) return;
+
     await i.deferReply({ ephemeral: true });
     try {
+        // Find or create the role
         const role = i.guild.roles.cache.find(r => r.name === choice.name) || await i.guild.roles.create({ name: choice.name, color: choice.color });
+        
+        // Only remove existing color roles from this bot (using the 'names' list)
         const names = Object.values(colors).map(c => c.name);
         await i.member.roles.remove(i.member.roles.cache.filter(r => names.includes(r.name)));
+        
         await i.member.roles.add(role);
-        await i.editReply(`Role added: **${choice.name}**`);
-    } catch (e) { await i.editReply("Permissions error."); }
+        await i.editReply(`Role added: **${choice.name}** ✨`);
+    } catch (e) { 
+        console.error(e);
+        await i.editReply("Permissions error. Make sure my role is higher than the color roles!"); 
+    }
 });
 
 client.on('messageCreate', async message => {
@@ -132,13 +148,21 @@ client.on('messageCreate', async message => {
         message.reply("Welcome back!");
     }
 
+    // UPDATED COLOR PANEL COMMAND
     if (message.content.toLowerCase() === 'kadala setup color' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        const row = new ActionRowBuilder().addComponents(
+        const row1 = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('red_role').setLabel('Red 🔥').setStyle(ButtonStyle.Danger),
             new ButtonBuilder().setCustomId('blue_role').setLabel('Blue 🌊').setStyle(ButtonStyle.Primary),
-            new ButtonBuilder().setCustomId('green_role').setLabel('Green 🌿').setStyle(ButtonStyle.Success)
+            new ButtonBuilder().setCustomId('green_role').setLabel('Green 🌿').setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId('yellow_role').setLabel('Yellow ⚡').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('purple_role').setLabel('Purple 😈').setStyle(ButtonStyle.Secondary)
         );
-        message.channel.send({ content: "🎨 **KADALA COLOR PANEL**", components: [row] });
+
+        const row2 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('pink_role').setLabel('Pink 🌸').setStyle(ButtonStyle.Secondary)
+        );
+
+        message.channel.send({ content: "🎨 **KADALA COLOR PANEL**", components: [row1, row2] });
     }
 });
 
